@@ -187,7 +187,7 @@ export default function Requests() {
         </div>
 
         {/* Detail Panel - 2 columns on desktop */}
-        <div className={`lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm ${r ? 'block' : 'hidden lg:block'}`}>
+        <div className={`lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm ${r ? 'block' : 'hidden lg:block'} flex flex-col max-h-[calc(100vh-160px)] lg:max-h-[calc(100vh-120px)]`}>
           {r ? (
             <>
               {/* Header */}
@@ -207,13 +207,13 @@ export default function Requests() {
                 <button onClick={() => selectRequest(null)} className="hidden lg:block p-1.5 hover:bg-gray-200 rounded-lg"><X className="w-5 h-5" /></button>
               </div>
 
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-4 overflow-y-auto flex-1 overscroll-contain">
                 {/* Top Row: Device Info + Pricing (compact, side by side) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Device Info - compact inline */}
                   <div className="md:col-span-2 bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><Eye className="w-4 h-4 text-primary-500" /> Device & Specs</h4>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                       <InfoRow k="Type" v={r.device_type || '—'} />
                       <InfoRow k="Model" v={r.model_name || '—'} />
                       {specs.storage && <InfoRow k="Storage" v={specs.storage} />}
@@ -237,7 +237,7 @@ export default function Requests() {
                 {/* Customer + Location Row */}
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                   <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><UserCheck className="w-4 h-4 text-primary-500" /> Customer</h4>
-                  <div className="flex items-center gap-4 text-sm flex-wrap">
+                  <div className="flex items-center gap-3 text-sm flex-wrap break-all">
                     <span className="font-semibold text-gray-900 text-base">{r.users?.name || '—'}</span>
                     {r.users?.phone && (
                       <span className="flex items-center gap-1.5">
@@ -261,7 +261,7 @@ export default function Requests() {
                 {Object.keys(cond).length > 0 && (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary-500" /> Conditions</h4>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                       {Object.entries(cond)
                         .filter(([k]) => !k.toLowerCase().includes('photo') && !k.toLowerCase().includes('url'))
                         .map(([k, v]) => (
@@ -303,7 +303,7 @@ export default function Requests() {
                         <span className="font-bold text-gray-900">₹{r.price_breakdown.base_price.toLocaleString()}</span>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                       {(r.price_breakdown.deductions ? Object.entries(r.price_breakdown.deductions) : Object.entries(r.price_breakdown).filter(([k]) => !['base_price', 'final_price'].includes(k))).map(([k, v]) => {
                         const valStr = String(v)
                         const isBonus = valStr.includes('+')
@@ -350,7 +350,7 @@ export default function Requests() {
                 {cond.agent_verification_photos && cond.agent_verification_photos.length > 0 && (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><Camera className="w-4 h-4 text-primary-500" /> Agent Verification Photos ({cond.agent_verification_photos.length})</h4>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {cond.agent_verification_photos.map((u, i) => (
                         <img key={i} src={u} alt="" onClick={() => { setPhotoGallery(cond.agent_verification_photos); setCurrentPhotoIdx(i); setSelectedPhoto(u); }}
                           className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity" />
@@ -371,7 +371,7 @@ export default function Requests() {
                     <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><ZoomIn className="w-4 h-4 text-primary-500" /> Device Photos ({photos.length})</h4>
                     {/* Main Photo Display */}
                     <div className="relative bg-white rounded-lg border border-gray-200 mb-3">
-                      <img src={photos[currentPhotoIdx]} alt="" className="w-full h-64 object-contain rounded-lg" />
+                      <img src={photos[currentPhotoIdx]} alt="" className="w-full h-48 sm:h-64 object-contain rounded-lg" />
                       {photos.length > 1 && (
                         <>
                           <button onClick={() => setCurrentPhotoIdx(p => p > 0 ? p - 1 : photos.length - 1)}

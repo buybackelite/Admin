@@ -193,7 +193,7 @@ export default function ConditionDeductions() {
   }
 
   return (
-    <div className="space-y-5 animate-fade-in-up">
+    <div className="space-y-5 animate-fade-in-up pb-4 lg:pb-0">
       {/* Sticky Header with Save/Reset */}
       <div className="sticky top-0 z-30 glass pb-3 pt-1 -mx-3 lg:-mx-5 px-3 lg:px-5 border-b border-gray-100/50">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -231,7 +231,7 @@ export default function ConditionDeductions() {
           <p className="text-gray-500 text-sm">Loading...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {Object.entries(categories).map(([category, items]) => {
             const config = CATEGORY_CONFIG[category] || { icon: Package, color: 'text-gray-600', bg: 'bg-gray-100' }
             const Icon = config.icon
