@@ -48,5 +48,30 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; user-select: none;
 /* Animate */
 @keyframes fade-in-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 .animate-fade-in-up { animation: fade-in-up 0.4s ease-out both; }
+
+/* Mobile Request Detail - Force vertical layout */
+@media (max-width: 639px) {
+  .mobile-detail-view { display: block !important; }
+  .desktop-detail-view { display: none !important; }
+  .mobile-specs-grid { 
+    display: grid !important; 
+    grid-template-columns: repeat(2, 1fr) !important; 
+    gap: 4px !important;
+    font-size: 11px !important;
+  }
+  .mobile-specs-grid > div {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .mobile-price-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+}
+@media (min-width: 640px) {
+  .mobile-detail-view { display: none !important; }
+  .desktop-detail-view { display: block !important; }
+}
 @keyframes scale-in { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
 .animate-scale-in { animation: scale-in 0.3s ease-out both; }

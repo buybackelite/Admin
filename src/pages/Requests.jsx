@@ -208,27 +208,28 @@ export default function Requests() {
               </div>
 
               <div className="p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto flex-1 overscroll-contain">
-                {/* MOBILE: Ultra Compact All-in-One View */}
-                <div className="sm:hidden space-y-2">
-                  {/* Device Specs - Inline Table */}
+                {/* MOBILE: Ultra Compact All-in-One View - uses CSS class for guaranteed mobile detection */}
+                <div className="mobile-detail-view space-y-2">
+                  {/* Device Specs - 2 column vertical layout */}
                   <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
                     <div className="flex items-center gap-1 mb-1.5"><Eye className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-gray-500 uppercase">Device & Specs</span></div>
-                    <div className="grid grid-cols-3 gap-x-2 gap-y-0.5 text-[11px]">
-                      <div><span className="text-gray-400">Type</span> <span className="font-semibold text-gray-800 block">{r.device_type || '—'}</span></div>
-                      <div><span className="text-gray-400">Model</span> <span className="font-semibold text-gray-800 block truncate">{r.model_name?.split(' ').slice(-2).join(' ') || '—'}</span></div>
-                      <div><span className="text-gray-400">Storage</span> <span className="font-semibold text-gray-800 block">{specs.storage || '—'}</span></div>
-                      <div><span className="text-gray-400">RAM</span> <span className="font-semibold text-gray-800 block">{specs.ram || '—'}</span></div>
-                      <div><span className="text-gray-400">Battery</span> <span className="font-semibold text-gray-800 block">{specs.battery_health || '—'}</span></div>
-                      <div><span className="text-gray-400">Cycles</span> <span className="font-semibold text-gray-800 block">{specs.cycle_count || '—'}</span></div>
+                    <div className="mobile-specs-grid">
+                      <div><span className="text-gray-400 text-[10px]">Type</span><span className="font-semibold text-gray-800">{r.device_type || '—'}</span></div>
+                      <div><span className="text-gray-400 text-[10px]">Model</span><span className="font-semibold text-gray-800 truncate">{r.model_name?.split(' ').slice(-2).join(' ') || '—'}</span></div>
+                      <div><span className="text-gray-400 text-[10px]">Storage</span><span className="font-semibold text-gray-800">{specs.storage || '—'}</span></div>
+                      <div><span className="text-gray-400 text-[10px]">RAM</span><span className="font-semibold text-gray-800">{specs.ram || '—'}</span></div>
+                      <div><span className="text-gray-400 text-[10px]">Battery</span><span className="font-semibold text-gray-800">{specs.battery_health || '—'}</span></div>
+                      <div><span className="text-gray-400 text-[10px]">Cycles</span><span className="font-semibold text-gray-800">{specs.cycle_count || '—'}</span></div>
                     </div>
                   </div>
 
-                  {/* Price - Horizontal */}
-                  <div className="bg-emerald-50 rounded-lg p-2 border border-emerald-100 flex items-center justify-between">
-                    <div className="flex items-center gap-1"><IndianRupee className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-emerald-700 uppercase">Price</span></div>
-                    <div className="flex items-center gap-3 text-[11px]">
-                      <div><span className="text-gray-500">Est:</span> <span className="font-bold text-gray-900">₹{(r.system_estimated_price || 0).toLocaleString()}</span></div>
-                      {r.final_price > 0 && <div><span className="text-gray-500">Final:</span> <span className="font-bold text-green-600">₹{r.final_price.toLocaleString()}</span></div>}
+                  {/* Price - Vertical stack */}
+                  <div className="bg-emerald-50 rounded-lg p-2 border border-emerald-100">
+                    <div className="flex items-center gap-1 mb-1"><IndianRupee className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-emerald-700 uppercase">Price</span></div>
+                    <div className="mobile-price-row text-[11px]">
+                      <div className="flex justify-between"><span className="text-gray-500">Estimated</span><span className="font-bold text-gray-900">₹{(r.system_estimated_price || 0).toLocaleString()}</span></div>
+                      {r.admin_offer_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Offer</span><span className="font-bold text-orange-600">₹{r.admin_offer_price.toLocaleString()}</span></div>}
+                      {r.final_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Final</span><span className="font-bold text-green-600">₹{r.final_price.toLocaleString()}</span></div>}
                     </div>
                   </div>
 
@@ -248,7 +249,7 @@ export default function Requests() {
                     </div>
                   </div>
 
-                  {/* Conditions - Ultra Compact 2-col */}
+                  {/* Conditions - 2-col compact */}
                   {Object.keys(cond).length > 0 && (
                     <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
                       <div className="flex items-center gap-1 mb-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-gray-500 uppercase">Conditions</span></div>
@@ -268,8 +269,8 @@ export default function Requests() {
                   )}
                 </div>
 
-                {/* TABLET+: Original Layout */}
-                <div className="hidden sm:block space-y-4">
+                {/* TABLET+: Original Layout - hidden on mobile via CSS */}
+                <div className="desktop-detail-view space-y-4">
                   {/* Device Info + Pricing side by side */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-2 bg-gray-50 rounded-xl p-4 border border-gray-100">
