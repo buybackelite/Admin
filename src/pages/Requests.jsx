@@ -208,12 +208,12 @@ export default function Requests() {
               </div>
 
               <div className="p-4 space-y-4 overflow-y-auto flex-1 overscroll-contain">
-                {/* Top Row: Device Info + Pricing (compact, side by side) */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Top Row: Device Info + Pricing - stacked on mobile, side by side on tablet+ */}
+                <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-3">
                   {/* Device Info - compact inline */}
-                  <div className="md:col-span-2 bg-gray-50 rounded-xl p-4 border border-gray-100">
-                    <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><Eye className="w-4 h-4 text-primary-500" /> Device & Specs</h4>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="sm:col-span-2 bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100">
+                    <h4 className="text-xs sm:text-sm font-bold text-gray-600 uppercase mb-2 sm:mb-3 flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" /> Device & Specs</h4>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs sm:text-sm">
                       <InfoRow k="Type" v={r.device_type || '—'} />
                       <InfoRow k="Model" v={r.model_name || '—'} />
                       {specs.storage && <InfoRow k="Storage" v={specs.storage} />}
@@ -224,21 +224,21 @@ export default function Requests() {
                     </div>
                   </div>
                   {/* Pricing - compact */}
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                    <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><IndianRupee className="w-4 h-4 text-primary-500" /> Price</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between"><span className="text-gray-500">Estimated</span><span className="font-bold text-gray-900 text-base">₹{(r.system_estimated_price || 0).toLocaleString()}</span></div>
-                      {r.admin_offer_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Offer</span><span className="font-bold text-orange-600 text-base">₹{r.admin_offer_price.toLocaleString()}</span></div>}
-                      {r.final_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Final</span><span className="font-bold text-green-600 text-base">₹{r.final_price.toLocaleString()}</span></div>}
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100">
+                    <h4 className="text-xs sm:text-sm font-bold text-gray-600 uppercase mb-2 sm:mb-3 flex items-center gap-1.5"><IndianRupee className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" /> Price</h4>
+                    <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+                      <div className="flex justify-between"><span className="text-gray-500">Estimated</span><span className="font-bold text-gray-900 text-sm sm:text-base">₹{(r.system_estimated_price || 0).toLocaleString()}</span></div>
+                      {r.admin_offer_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Offer</span><span className="font-bold text-orange-600 text-sm sm:text-base">₹{r.admin_offer_price.toLocaleString()}</span></div>}
+                      {r.final_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Final</span><span className="font-bold text-green-600 text-sm sm:text-base">₹{r.final_price.toLocaleString()}</span></div>}
                     </div>
                   </div>
                 </div>
 
                 {/* Customer + Location Row */}
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                  <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><UserCheck className="w-4 h-4 text-primary-500" /> Customer</h4>
-                  <div className="flex items-center gap-3 text-sm flex-wrap break-all">
-                    <span className="font-semibold text-gray-900 text-base">{r.users?.name || '—'}</span>
+                <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100">
+                  <h4 className="text-xs sm:text-sm font-bold text-gray-600 uppercase mb-2 sm:mb-3 flex items-center gap-1.5"><UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" /> Customer</h4>
+                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm flex-wrap break-all">
+                    <span className="font-semibold text-gray-900 text-sm sm:text-base">{r.users?.name || '—'}</span>
                     {r.users?.phone && (
                       <span className="flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-gray-400" /> {r.users.phone}
@@ -259,15 +259,15 @@ export default function Requests() {
 
                 {/* Condition Answers - compact grid */}
                 {Object.keys(cond).length > 0 && (
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                    <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary-500" /> Conditions</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100">
+                    <h4 className="text-xs sm:text-sm font-bold text-gray-600 uppercase mb-2 sm:mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" /> Conditions</h4>
+                    <div className="grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-0.5 sm:gap-y-1 text-xs sm:text-sm">
                       {Object.entries(cond)
                         .filter(([k]) => !k.toLowerCase().includes('photo') && !k.toLowerCase().includes('url'))
                         .map(([k, v]) => (
-                        <div key={k} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
-                          <span className="text-gray-500 text-sm capitalize">{k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}</span>
-                          <span className={`text-sm font-semibold ${typeof v === 'boolean' ? (v ? 'text-green-600' : 'text-red-500') : 'text-gray-900'}`}>
+                        <div key={k} className="flex justify-between py-1 sm:py-1.5 border-b border-gray-100 last:border-0">
+                          <span className="text-gray-500 text-xs sm:text-sm capitalize truncate mr-1">{k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}</span>
+                          <span className={`text-xs sm:text-sm font-semibold shrink-0 ${typeof v === 'boolean' ? (v ? 'text-green-600' : 'text-red-500') : 'text-gray-900'}`}>
                             {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : Array.isArray(v) ? v.join(', ') : String(v)}
                           </span>
                         </div>
