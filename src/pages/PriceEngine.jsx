@@ -57,23 +57,23 @@ export default function PriceEngine() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in-up">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Price Management</h1>
-          <p className="text-gray-500">Manage base prices for device models</p>
+          <h1 className="text-xl font-extrabold text-gray-900">Price Management</h1>
+          <p className="text-gray-400 text-sm">Manage base prices for device models</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => navigate('/condition-deductions')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all hover:shadow-lg hover:shadow-indigo-500/20 font-medium text-sm"
           >
             <Sliders className="w-4 h-4" />
             Condition Deductions
           </button>
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-medium"
+            className="flex items-center gap-2 px-4 py-2.5 gradient-admin text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 transition-all font-medium text-sm"
           >
             <Plus className="w-4 h-4" />
             Add Model
@@ -89,7 +89,7 @@ export default function PriceEngine() {
 
       {/* Add Model Dialog */}
       {showAdd && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm animate-scale-in">
           <h3 className="font-semibold text-gray-900 mb-4">Add Device Price</h3>
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
@@ -167,7 +167,7 @@ export default function PriceEngine() {
           <p className="text-gray-500">Loading prices...</p>
         </div>
       ) : filteredModels.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <Laptop className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-1">No Prices Configured</h3>
           <p className="text-sm text-gray-500 mb-4">Click "Add Model" to add device prices</p>
@@ -229,15 +229,15 @@ export default function PriceEngine() {
       )}
 
       {/* Info Card */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">How Pricing Works</h3>
-        <p className="text-sm text-blue-700">
+      <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4">
+        <h3 className="font-bold text-blue-800 mb-2 text-sm">How Pricing Works</h3>
+        <p className="text-xs text-blue-700">
           <strong>Base Price</strong> is the maximum buyback value for each model.
         </p>
-        <p className="text-sm text-blue-700 mt-1">
+        <p className="text-xs text-blue-700 mt-1">
           <strong>Condition Deductions</strong> (managed separately) are subtracted from the base price based on device condition.
         </p>
-        <p className="text-sm text-blue-700 mt-1">
+        <p className="text-xs text-blue-700 mt-1">
           Final Price = Base Price - Sum of applicable condition deductions + Bonuses (warranty, accessories)
         </p>
       </div>

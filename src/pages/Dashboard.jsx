@@ -5,13 +5,15 @@ import {
   ShoppingBag, 
   Clock, 
   CheckCircle, 
-  IndianRupee,
+  DollarSign,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  ArrowRight,
+  Shield
 } from 'lucide-react'
 
 export default function Dashboard() {
-  const { stats, fetchStats, requests, fetchRequests, fraudAlerts, fetchFraudAlerts, selectRequest } = useStore()
+  const { stats, requests, fraudAlerts, fetchStats, fetchRequests, fetchFraudAlerts, isLoading, selectRequest } = useStore()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -22,156 +24,138 @@ export default function Dashboard() {
 
   const recentRequests = requests.slice(0, 5)
 
-  const statCards = [
-    {
-      title: 'Total Requests',
-      value: stats.totalRequests,
-      icon: ShoppingBag,
-      color: 'bg-blue-500',
-      bgColor: 'bg-blue-50'
-    },
-    {
-      title: 'Pending Review',
-      value: stats.pendingRequests,
-      icon: Clock,
-      color: 'bg-yellow-500',
-      bgColor: 'bg-yellow-50'
-    },
-    {
-      title: 'Completed',
-      value: stats.completedRequests,
-      icon: CheckCircle,
-      color: 'bg-green-500',
-      bgColor: 'bg-green-50'
-    },
-    {
-      title: 'Total Value',
-      value: `₹${stats.totalRevenue.toLocaleString()}`,
-      icon: IndianRupee,
-      color: 'bg-purple-500',
-      bgColor: 'bg-purple-50'
-    }
-  ]
-
-  const getStatusBadge = (status) => {
-    const styles = {
-      Pending: 'bg-yellow-100 text-yellow-700',
-      Reviewing: 'bg-blue-100 text-blue-700',
-      Counter_Offered: 'bg-purple-100 text-purple-700',
-      Customer_Countered: 'bg-indigo-100 text-indigo-700',
-      Offer_Accepted: 'bg-green-100 text-green-700',
-      Seller_Confirmed: 'bg-teal-100 text-teal-700',
-      Pickup_Scheduled: 'bg-indigo-100 text-indigo-700',
-      Agent_Assigned: 'bg-cyan-100 text-cyan-700',
-      Agent_En_Route: 'bg-cyan-100 text-cyan-700',
-      Agent_Arrived: 'bg-teal-100 text-teal-700',
-      Picked_Up: 'bg-sky-100 text-sky-700',
-      Completed: 'bg-emerald-100 text-emerald-700',
-      Rejected: 'bg-red-100 text-red-700',
-      Cancelled: 'bg-gray-100 text-gray-700'
-    }
-    return styles[status] || 'bg-gray-100 text-gray-700'
-  }
-
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+    <div className="space-y-5 animate-fade-in-up">
+      {/* Welcome Banner */}
+      <div className="relative rounded-2xl overflow-hidden gradient-admin p-5 lg:p-6">
+        <div className="absolute inset-0 noise-overlay" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl lg:text-2xl font-extrabold text-white">Dashboard</h1>
+            <p className="text-white/60 text-sm mt-0.5">Overview of your buyback platform</p>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/10">
+            <Shield className="w-4 h-4 text-white/70" />
+            <span className="text-white/80 text-xs font-medium">Admin</span>
+          </div>
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {statCards.map((stat) => (
-          <div key={stat.title} className="bg-white rounded-xl border border-gray-200 p-3.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500">{stat.title}</p>
-                <p className="text-xl font-bold text-gray-900 mt-0.5">{stat.value}</p>
-              </div>
-              <div className={`w-9 h-9 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                <stat.icon className={`w-4 h-4 ${stat.color.replace('bg-', 'text-')}`} />
-              </div>
-            </div>
-          </div>
-        ))}
+        <StatCard icon={ShoppingBag} label="Total Requests" value={stats.totalRequests} trend="+12%" color="blue" />
+        <StatCard icon={Clock} label="Pending" value={stats.pendingRequests} color="amber" />
+        <StatCard icon={CheckCircle} label="Completed" value={stats.completedRequests} color="emerald" />
+        <StatCard icon={DollarSign} label="Total Value" value={`₹${(stats.totalRevenue || 0).toLocaleString()}`} color="violet" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid lg:grid-cols-2 gap-4">
         {/* Recent Requests */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="font-semibold text-sm text-gray-900">Recent Requests</h2>
-            <TrendingUp className="w-4 h-4 text-gray-400" />
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+            <h2 className="font-bold text-gray-900 text-sm">Recent Requests</h2>
+            <button onClick={() => navigate('/requests')}
+              className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
+              View All <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="divide-y divide-gray-100">
-            {recentRequests.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No requests yet
-              </div>
-            ) : (
-              recentRequests.map((request) => (
-                <div 
-                  key={request.id} 
-                  className="px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => { selectRequest(request); navigate('/requests') }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <ShoppingBag className="w-4 h-4 text-gray-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm text-gray-900">
-                          {request.model_name || request.device_type}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {request.users?.phone || 'Unknown'}
-                        </p>
-                      </div>
+          {recentRequests.length === 0 ? (
+            <div className="p-10 text-center text-gray-400 text-sm">No requests yet</div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {recentRequests.slice(0, 5).map((request) => (
+                <div key={request.id}
+                  className="px-5 py-3 hover:bg-gray-50/80 transition-colors cursor-pointer"
+                  onClick={() => { selectRequest(request); navigate('/requests') }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{request.model_name || request.device_type}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{request.users?.name || request.users?.phone || 'Unknown'}</p>
                     </div>
-                    <div className="text-right">
-                      <span className={`inline-block px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${getStatusBadge(request.status)}`}>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-gray-900 text-sm">₹{(request.system_estimated_price || 0).toLocaleString()}</p>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                        request.status === 'Pending' ? 'bg-amber-50 text-amber-600' :
+                        request.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' :
+                        'bg-blue-50 text-blue-600'
+                      }`}>
+                        <span className={`w-1 h-1 rounded-full ${
+                          request.status === 'Pending' ? 'bg-amber-500' :
+                          request.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500'
+                        }`} />
                         {request.status?.replace(/_/g, ' ')}
                       </span>
-                      <p className="text-xs font-bold text-gray-900 mt-0.5">
-                        ₹{(request.system_estimated_price || request.user_expected_price || 0).toLocaleString()}
-                      </p>
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Fraud Alerts */}
-        <div className="bg-white rounded-xl border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="font-semibold text-sm text-gray-900">Fraud Alerts</h2>
-            <AlertTriangle className="w-4 h-4 text-red-500" />
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+            <h2 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-500" /> Fraud Alerts
+            </h2>
+            <button onClick={() => navigate('/fraud-alerts')}
+              className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
+              View All <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="divide-y divide-gray-100">
-            {fraudAlerts.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-1" />
-                <p className="text-xs">No active alerts</p>
-              </div>
-            ) : (
-              fraudAlerts.slice(0, 5).map((alert) => (
-                <div key={alert.id} className="px-3 py-2.5">
-                  <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <AlertTriangle className="w-3 h-3 text-red-500" />
+          {fraudAlerts.length === 0 ? (
+            <div className="p-10 text-center">
+              <CheckCircle className="w-10 h-10 text-emerald-300 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No active alerts</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {fraudAlerts.slice(0, 5).map((alert) => (
+                <div key={alert.id} className="px-5 py-3 hover:bg-gray-50/80 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-900">{alert.alert_type?.replace(/_/g, ' ')}</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">{alert.alert_message}</p>
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 text-sm truncate">{alert.alert_message}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{new Date(alert.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function StatCard({ icon: Icon, label, value, trend, color }) {
+  const colors = {
+    blue: { bg: 'bg-blue-50', icon: 'text-blue-600' },
+    amber: { bg: 'bg-amber-50', icon: 'text-amber-600' },
+    emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600' },
+    violet: { bg: 'bg-violet-50', icon: 'text-violet-600' },
+  }
+  const c = colors[color] || colors.blue
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-4 card-hover shadow-sm">
+      <div className="flex items-center justify-between mb-2.5">
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${c.bg}`}>
+          <Icon className={`w-[18px] h-[18px] ${c.icon}`} />
+        </div>
+        {trend && (
+          <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-full">
+            <TrendingUp className="w-2.5 h-2.5" />{trend}
+          </span>
+        )}
+      </div>
+      <p className="text-xl font-extrabold text-gray-900">{value}</p>
+      <p className="text-xs text-gray-400 mt-0.5">{label}</p>
     </div>
   )
 }

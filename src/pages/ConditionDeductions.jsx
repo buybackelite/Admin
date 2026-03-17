@@ -193,24 +193,24 @@ export default function ConditionDeductions() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in-up">
       {/* Sticky Header with Save/Reset */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm pb-3 pt-1 -mx-6 px-6 border-b border-gray-100 shadow-sm">
+      <div className="sticky top-0 z-30 glass pb-3 pt-1 -mx-3 lg:-mx-5 px-3 lg:px-5 border-b border-gray-100/50">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/price-engine')} className="p-2 hover:bg-gray-100 rounded-lg">
-              <ArrowLeft className="w-5 h-5" />
+            <button onClick={() => navigate('/price-engine')} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+              <ArrowLeft className="w-5 h-5 text-gray-500" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Condition-Based Pricing</h1>
-              <p className="text-gray-500 text-sm">Set ₹ deductions from base price for each condition</p>
+              <h1 className="text-xl font-extrabold text-gray-900">Condition-Based Pricing</h1>
+              <p className="text-gray-400 text-sm">Set ₹ deductions from base price for each condition</p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button onClick={handleResetDefaults} className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium">
+          <div className="flex gap-2">
+            <button onClick={handleResetDefaults} className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 font-medium text-sm transition-colors">
               <RotateCcw className="w-4 h-4" /> Reset
             </button>
-            <button onClick={handleSaveAll} disabled={isLoading} className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium disabled:opacity-50">
+            <button onClick={handleSaveAll} disabled={isLoading} className="flex items-center gap-2 px-4 py-2.5 gradient-admin text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 font-medium text-sm disabled:opacity-50 transition-all">
               {isLoading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
               Save All
             </button>
@@ -237,7 +237,7 @@ export default function ConditionDeductions() {
             const Icon = config.icon
 
             return (
-              <div key={category} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div key={category} className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
                 {/* Compact Category Header */}
                 <div className={`${config.bg} px-3 py-2 flex items-center gap-2`}>
                   <Icon className={`w-4 h-4 ${config.color}`} />
@@ -275,7 +275,7 @@ export default function ConditionDeductions() {
           })}
 
           {/* Add Custom Card */}
-          <div className="bg-white rounded-lg border border-dashed border-gray-300 overflow-hidden flex flex-col">
+          <div className="bg-white rounded-xl border border-dashed border-gray-200 overflow-hidden flex flex-col">
             <div className="bg-gray-50 px-3 py-2 flex items-center gap-2">
               <Plus className="w-4 h-4 text-gray-500" />
               <h3 className="font-bold text-xs uppercase text-gray-500">Add Custom</h3>
@@ -333,8 +333,8 @@ export default function ConditionDeductions() {
 
       {/* Edit Modal */}
       {editItem && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setEditItem(null)}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setEditItem(null)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
             <h3 className="font-bold text-lg text-gray-900 mb-4">Edit: {editItem.condition_name}</h3>
 
             {/* Toggle Deduction / Bonus */}

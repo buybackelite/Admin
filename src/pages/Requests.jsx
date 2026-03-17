@@ -129,9 +129,9 @@ export default function Requests() {
   const canComplete = ['Pickup_Scheduled', 'Agent_En_Route', 'Agent_Arrived', 'Picked_Up'].includes(r?.status)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in-up">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Sell Requests</h1>
+        <h1 className="text-xl font-extrabold text-gray-900">Sell Requests</h1>
         <span className="text-sm text-gray-500">{filteredRequests.length} requests</span>
       </div>
 
@@ -152,7 +152,7 @@ export default function Requests() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* List - left column */}
-        <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${r ? 'hidden lg:block' : 'lg:col-span-3'}`}>
+        <div className={`bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm ${r ? 'hidden lg:block' : 'lg:col-span-3'}`}>
           {isLoading ? (
             <div className="h-40 flex items-center justify-center">
               <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
@@ -187,11 +187,11 @@ export default function Requests() {
         </div>
 
         {/* Detail Panel - 2 columns on desktop */}
-        <div className={`lg:col-span-2 bg-white rounded-xl border border-gray-200 ${r ? 'block' : 'hidden lg:block'}`}>
+        <div className={`lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm ${r ? 'block' : 'hidden lg:block'}`}>
           {r ? (
             <>
               {/* Header */}
-              <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                 <div className="flex items-center gap-3 min-w-0">
                   <button onClick={() => selectRequest(null)} className="lg:hidden p-1 hover:bg-gray-200 rounded-lg shrink-0">
                     <ChevronLeft className="w-5 h-5" />
@@ -499,7 +499,7 @@ export default function Requests() {
               </div>
 
               {/* Bottom Action Bar - only Mark Completed (like Android admin app) */}
-              <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+              <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
                 {canComplete && (
                   <button onClick={handleMarkCompleted}
                     className="w-full py-2.5 text-sm font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-1.5">
