@@ -50,6 +50,8 @@ export default function Requests() {
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [photoIdx, setPhotoIdx] = useState(0)
   const [msg, setMsg] = useState(null)
+  const [photoGallery, setPhotoGallery] = useState([])
+  const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0)
 
   // Pickup scheduling state
   const [selAgent, setSelAgent] = useState('')
@@ -86,7 +88,13 @@ export default function Requests() {
     const price = selectedRequest.admin_offer_price || selectedRequest.system_estimated_price
     if (!window.confirm(`Mark deal completed at ₹${price?.toLocaleString() || 0}?`)) return
     const ok = await markCompleted(selectedRequest.id, price)
-    if (ok) showMsg('s', 'Deal completed!')
+    if (ok) {
+      showMsg('s', '✓ Deal marked as completed successfully!')
+      // Refresh to show updated status
+      setTimeout(() => fetchRequests(statusFilter), 1000)
+    } else {
+      showMsg('e', 'Failed to mark as completed')
+    }
   }
 
   // Mark Payment Done handler (matching Android admin app)
@@ -342,10 +350,10 @@ export default function Requests() {
                 {cond.agent_verification_photos && cond.agent_verification_photos.length > 0 && (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><Camera className="w-4 h-4 text-primary-500" /> Agent Verification Photos ({cond.agent_verification_photos.length})</h4>
-                    <div className="flex gap-3 overflow-x-auto">
+                    <div className="grid grid-cols-4 gap-2">
                       {cond.agent_verification_photos.map((u, i) => (
-                        <img key={i} src={u} alt="" onClick={() => setSelectedPhoto(u)}
-                          className="shrink-0 w-28 h-28 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity" />
+                        <img key={i} src={u} alt="" onClick={() => { setPhotoGallery(cond.agent_verification_photos); setCurrentPhotoIdx(i); setSelectedPhoto(u); }}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity" />
                       ))}
                     </div>
                     {cond.customer_signature_url && (
@@ -357,14 +365,36 @@ export default function Requests() {
                   </div>
                 )}
 
-                {/* Photos Row */}
+                {/* Photos Row - Gallery with Navigation */}
                 {photos.length > 0 && (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><ZoomIn className="w-4 h-4 text-primary-500" /> Device Photos ({photos.length})</h4>
-                    <div className="flex gap-3 overflow-x-auto">
+                    {/* Main Photo Display */}
+                    <div className="relative bg-white rounded-lg border border-gray-200 mb-3">
+                      <img src={photos[currentPhotoIdx]} alt="" className="w-full h-64 object-contain rounded-lg" />
+                      {photos.length > 1 && (
+                        <>
+                          <button onClick={() => setCurrentPhotoIdx(p => p > 0 ? p - 1 : photos.length - 1)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70">
+                            <ChevronLeft className="w-5 h-5" />
+                          </button>
+                          <button onClick={() => setCurrentPhotoIdx(p => p < photos.length - 1 ? p + 1 : 0)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70">
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                            {currentPhotoIdx + 1} / {photos.length}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {/* Thumbnail Strip */}
+                    <div className="flex gap-2 overflow-x-auto pb-1">
                       {photos.map((u, i) => (
-                        <img key={i} src={u} alt="" onClick={() => setSelectedPhoto(u)}
-                          className="shrink-0 w-28 h-28 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity" />
+                        <img key={i} src={u} alt="" onClick={() => setCurrentPhotoIdx(i)}
+                          className={`shrink-0 w-16 h-16 object-cover rounded border-2 cursor-pointer transition-all ${
+                            i === currentPhotoIdx ? 'border-primary-500 ring-2 ring-primary-200' : 'border-gray-200 hover:border-primary-300'
+                          }`} />
                       ))}
                     </div>
                   </div>
