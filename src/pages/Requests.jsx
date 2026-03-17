@@ -207,93 +207,147 @@ export default function Requests() {
                 <button onClick={() => selectRequest(null)} className="hidden lg:block p-1.5 hover:bg-gray-200 rounded-lg"><X className="w-5 h-5" /></button>
               </div>
 
-              <div className="p-4 space-y-4 overflow-y-auto flex-1 overscroll-contain">
-                {/* Top Row: Device Info + Pricing - stacked on mobile, side by side on tablet+ */}
-                <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-3">
-                  {/* Device Info - compact inline */}
-                  <div className="sm:col-span-2 bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100">
-                    <h4 className="text-xs sm:text-sm font-bold text-gray-600 uppercase mb-2 sm:mb-3 flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" /> Device & Specs</h4>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs sm:text-sm">
-                      <InfoRow k="Type" v={r.device_type || '—'} />
-                      <InfoRow k="Model" v={r.model_name || '—'} />
-                      {specs.storage && <InfoRow k="Storage" v={specs.storage} />}
-                      {specs.ram && <InfoRow k="RAM" v={specs.ram} />}
-                      {specs.battery_health && <InfoRow k="Battery" v={specs.battery_health} />}
-                      {specs.cycle_count && <InfoRow k="Cycles" v={specs.cycle_count} />}
-                      {specs.processor && <InfoRow k="Processor" v={specs.processor} />}
+              <div className="p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto flex-1 overscroll-contain">
+                {/* MOBILE: Ultra Compact All-in-One View */}
+                <div className="sm:hidden space-y-2">
+                  {/* Device Specs - Inline Table */}
+                  <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
+                    <div className="flex items-center gap-1 mb-1.5"><Eye className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-gray-500 uppercase">Device & Specs</span></div>
+                    <div className="grid grid-cols-3 gap-x-2 gap-y-0.5 text-[11px]">
+                      <div><span className="text-gray-400">Type</span> <span className="font-semibold text-gray-800 block">{r.device_type || '—'}</span></div>
+                      <div><span className="text-gray-400">Model</span> <span className="font-semibold text-gray-800 block truncate">{r.model_name?.split(' ').slice(-2).join(' ') || '—'}</span></div>
+                      <div><span className="text-gray-400">Storage</span> <span className="font-semibold text-gray-800 block">{specs.storage || '—'}</span></div>
+                      <div><span className="text-gray-400">RAM</span> <span className="font-semibold text-gray-800 block">{specs.ram || '—'}</span></div>
+                      <div><span className="text-gray-400">Battery</span> <span className="font-semibold text-gray-800 block">{specs.battery_health || '—'}</span></div>
+                      <div><span className="text-gray-400">Cycles</span> <span className="font-semibold text-gray-800 block">{specs.cycle_count || '—'}</span></div>
                     </div>
                   </div>
-                  {/* Pricing - compact */}
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100">
-                    <h4 className="text-xs sm:text-sm font-bold text-gray-600 uppercase mb-2 sm:mb-3 flex items-center gap-1.5"><IndianRupee className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" /> Price</h4>
-                    <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
-                      <div className="flex justify-between"><span className="text-gray-500">Estimated</span><span className="font-bold text-gray-900 text-sm sm:text-base">₹{(r.system_estimated_price || 0).toLocaleString()}</span></div>
-                      {r.admin_offer_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Offer</span><span className="font-bold text-orange-600 text-sm sm:text-base">₹{r.admin_offer_price.toLocaleString()}</span></div>}
-                      {r.final_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Final</span><span className="font-bold text-green-600 text-sm sm:text-base">₹{r.final_price.toLocaleString()}</span></div>}
-                    </div>
-                  </div>
-                </div>
 
-                {/* Customer + Location Row */}
-                <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100">
-                  <h4 className="text-xs sm:text-sm font-bold text-gray-600 uppercase mb-2 sm:mb-3 flex items-center gap-1.5"><UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" /> Customer</h4>
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm flex-wrap break-all">
-                    <span className="font-semibold text-gray-900 text-sm sm:text-base">{r.users?.name || '—'}</span>
-                    {r.users?.phone && (
-                      <span className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-gray-400" /> {r.users.phone}
-                        <button onClick={() => openWA(r.users.phone)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200" title="WhatsApp">
-                          <MessageCircle className="w-3 h-3" />
-                        </button>
-                      </span>
-                    )}
-                    {r.users?.email && <span className="text-gray-500">{r.users.email}</span>}
-                    {r.user_location && (
-                      <button onClick={() => openMaps(r.user_location)} className="flex items-center gap-1 text-primary-600 hover:underline font-medium">
-                        <MapPin className="w-3.5 h-3.5" /> Map
-                      </button>
-                    )}
-                    {r.pickup_address && <span className="text-gray-500 text-xs">📍 {r.pickup_address}{r.pickup_pincode ? ` (${r.pickup_pincode})` : ''}</span>}
-                  </div>
-                </div>
-
-                {/* Condition Answers - compact grid */}
-                {Object.keys(cond).length > 0 && (
-                  <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-100">
-                    <h4 className="text-xs sm:text-sm font-bold text-gray-600 uppercase mb-2 sm:mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" /> Conditions</h4>
-                    <div className="grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-0.5 sm:gap-y-1 text-xs sm:text-sm">
-                      {Object.entries(cond)
-                        .filter(([k]) => !k.toLowerCase().includes('photo') && !k.toLowerCase().includes('url'))
-                        .map(([k, v]) => (
-                        <div key={k} className="flex justify-between py-1 sm:py-1.5 border-b border-gray-100 last:border-0">
-                          <span className="text-gray-500 text-xs sm:text-sm capitalize truncate mr-1">{k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}</span>
-                          <span className={`text-xs sm:text-sm font-semibold shrink-0 ${typeof v === 'boolean' ? (v ? 'text-green-600' : 'text-red-500') : 'text-gray-900'}`}>
-                            {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : Array.isArray(v) ? v.join(', ') : String(v)}
-                          </span>
-                        </div>
-                      ))}
+                  {/* Price - Horizontal */}
+                  <div className="bg-emerald-50 rounded-lg p-2 border border-emerald-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1"><IndianRupee className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-emerald-700 uppercase">Price</span></div>
+                    <div className="flex items-center gap-3 text-[11px]">
+                      <div><span className="text-gray-500">Est:</span> <span className="font-bold text-gray-900">₹{(r.system_estimated_price || 0).toLocaleString()}</span></div>
+                      {r.final_price > 0 && <div><span className="text-gray-500">Final:</span> <span className="font-bold text-green-600">₹{r.final_price.toLocaleString()}</span></div>}
                     </div>
-                    {/* Condition Photos */}
-                    {(cond.screen_condition_photo_url || cond.body_condition_photo_url) && (
-                      <div className="flex gap-2 mt-2">
-                        {cond.screen_condition_photo_url && (
-                          <div className="flex-1">
-                            <p className="text-[10px] text-gray-400 uppercase mb-1">Screen Photo</p>
-                            <img src={cond.screen_condition_photo_url} alt="Screen" className="w-full h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80" onClick={() => setSelectedPhoto(cond.screen_condition_photo_url)} />
-                          </div>
-                        )}
-                        {cond.body_condition_photo_url && (
-                          <div className="flex-1">
-                            <p className="text-[10px] text-gray-400 uppercase mb-1">Body Photo</p>
-                            <img src={cond.body_condition_photo_url} alt="Body" className="w-full h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80" onClick={() => setSelectedPhoto(cond.body_condition_photo_url)} />
-                          </div>
-                        )}
+                  </div>
+
+                  {/* Customer - Compact */}
+                  <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1"><UserCheck className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-gray-500 uppercase">Customer</span></div>
+                      <div className="flex items-center gap-2">
+                        {r.users?.phone && <button onClick={() => openWA(r.users.phone)} className="p-1 bg-green-100 text-green-600 rounded"><MessageCircle className="w-3 h-3" /></button>}
+                        {r.user_location && <button onClick={() => openMaps(r.user_location)} className="p-1 bg-blue-100 text-blue-600 rounded"><MapPin className="w-3 h-3" /></button>}
                       </div>
-                    )}
+                    </div>
+                    <div className="text-[11px] mt-1">
+                      <span className="font-semibold text-gray-900">{r.users?.name || '—'}</span>
+                      {r.users?.phone && <span className="text-gray-500 ml-2">{r.users.phone}</span>}
+                      {r.users?.email && <span className="text-gray-400 block truncate">{r.users.email}</span>}
+                    </div>
                   </div>
-                )}
 
-                {/* Price Breakdown */}
+                  {/* Conditions - Ultra Compact 2-col */}
+                  {Object.keys(cond).length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
+                      <div className="flex items-center gap-1 mb-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-gray-500 uppercase">Conditions</span></div>
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-0 text-[10px]">
+                        {Object.entries(cond)
+                          .filter(([k]) => !k.toLowerCase().includes('photo') && !k.toLowerCase().includes('url'))
+                          .map(([k, v]) => (
+                          <div key={k} className="flex justify-between py-0.5 border-b border-gray-100">
+                            <span className="text-gray-500 truncate">{k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}</span>
+                            <span className={`font-semibold shrink-0 ml-1 ${typeof v === 'boolean' ? (v ? 'text-green-600' : 'text-red-500') : 'text-gray-800'}`}>
+                              {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* TABLET+: Original Layout */}
+                <div className="hidden sm:block space-y-4">
+                  {/* Device Info + Pricing side by side */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><Eye className="w-4 h-4 text-primary-500" /> Device & Specs</h4>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <InfoRow k="Type" v={r.device_type || '—'} />
+                        <InfoRow k="Model" v={r.model_name || '—'} />
+                        {specs.storage && <InfoRow k="Storage" v={specs.storage} />}
+                        {specs.ram && <InfoRow k="RAM" v={specs.ram} />}
+                        {specs.battery_health && <InfoRow k="Battery" v={specs.battery_health} />}
+                        {specs.cycle_count && <InfoRow k="Cycles" v={specs.cycle_count} />}
+                        {specs.processor && <InfoRow k="Processor" v={specs.processor} />}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><IndianRupee className="w-4 h-4 text-primary-500" /> Price</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-gray-500">Estimated</span><span className="font-bold text-gray-900 text-base">₹{(r.system_estimated_price || 0).toLocaleString()}</span></div>
+                        {r.admin_offer_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Offer</span><span className="font-bold text-orange-600 text-base">₹{r.admin_offer_price.toLocaleString()}</span></div>}
+                        {r.final_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Final</span><span className="font-bold text-green-600 text-base">₹{r.final_price.toLocaleString()}</span></div>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer */}
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><UserCheck className="w-4 h-4 text-primary-500" /> Customer</h4>
+                    <div className="flex items-center gap-3 text-sm flex-wrap">
+                      <span className="font-semibold text-gray-900 text-base">{r.users?.name || '—'}</span>
+                      {r.users?.phone && (
+                        <span className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-gray-400" /> {r.users.phone}
+                          <button onClick={() => openWA(r.users.phone)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><MessageCircle className="w-3 h-3" /></button>
+                        </span>
+                      )}
+                      {r.users?.email && <span className="text-gray-500">{r.users.email}</span>}
+                      {r.user_location && <button onClick={() => openMaps(r.user_location)} className="flex items-center gap-1 text-primary-600 hover:underline font-medium"><MapPin className="w-3.5 h-3.5" /> Map</button>}
+                    </div>
+                  </div>
+
+                  {/* Conditions */}
+                  {Object.keys(cond).length > 0 && (
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary-500" /> Conditions</h4>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                        {Object.entries(cond)
+                          .filter(([k]) => !k.toLowerCase().includes('photo') && !k.toLowerCase().includes('url'))
+                          .map(([k, v]) => (
+                          <div key={k} className="flex justify-between py-1.5 border-b border-gray-100">
+                            <span className="text-gray-500 capitalize">{k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}</span>
+                            <span className={`font-semibold ${typeof v === 'boolean' ? (v ? 'text-green-600' : 'text-red-500') : 'text-gray-900'}`}>
+                              {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Condition Photos */}
+                      {(cond.screen_condition_photo_url || cond.body_condition_photo_url) && (
+                        <div className="flex gap-2 mt-2">
+                          {cond.screen_condition_photo_url && (
+                            <div className="flex-1">
+                              <p className="text-[10px] text-gray-400 uppercase mb-1">Screen Photo</p>
+                              <img src={cond.screen_condition_photo_url} alt="Screen" className="w-full h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80" onClick={() => setSelectedPhoto(cond.screen_condition_photo_url)} />
+                            </div>
+                          )}
+                          {cond.body_condition_photo_url && (
+                            <div className="flex-1">
+                              <p className="text-[10px] text-gray-400 uppercase mb-1">Body Photo</p>
+                              <img src={cond.body_condition_photo_url} alt="Body" className="w-full h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80" onClick={() => setSelectedPhoto(cond.body_condition_photo_url)} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Price Breakdown - Show on all screens */}
                 {r.price_breakdown && (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><IndianRupee className="w-4 h-4 text-primary-500" /> Deductions & Bonuses</h4>
