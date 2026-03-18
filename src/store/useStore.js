@@ -307,6 +307,90 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  // Fetch all agents (including inactive) for management
+  fetchAllAgents: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      set({ agents: data || [] })
+      return data || []
+    } catch (error) {
+      console.error('Error fetching all agents:', error)
+      return []
+    }
+  },
+
+  // Add approved agent email (admin adds email, agent can only register with this email)
+  addApprovedAgentEmail: async (email, name, phone, city) => {
+    try {
+      // Insert into approved_agent_emails table
+      const { error: approvedError } = await supabase
+        .from('approved_agent_emails')
+        .insert({
+          email: email.toLowerCase().trim(),
+          name: name || '',
+          phone: phone || '',
+          city: city || '',
+          is_active: true,
+          added_by: get().admin?.id || null
+        })
+      if (approvedError) throw approvedError
+      return { success: true }
+    } catch (error) {
+      console.error('Error adding approved agent:', error)
+      return { success: false, message: error.message }
+    }
+  },
+
+  // Fetch approved agent emails
+  fetchApprovedAgentEmails: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('approved_agent_emails')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching approved agents:', error)
+      return []
+    }
+  },
+
+  // Remove approved agent email
+  removeApprovedAgentEmail: async (id) => {
+    try {
+      const { error } = await supabase
+        .from('approved_agent_emails')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+      return true
+    } catch (error) {
+      console.error('Error removing approved agent:', error)
+      return false
+    }
+  },
+
+  // Toggle agent active status
+  toggleAgentStatus: async (agentId, isActive) => {
+    try {
+      const { error } = await supabase
+        .from('agents')
+        .update({ is_active: isActive })
+        .eq('id', agentId)
+      if (error) throw error
+      await get().fetchAllAgents()
+      return true
+    } catch (error) {
+      console.error('Error toggling agent status:', error)
+      return false
+    }
+  },
+
   // Schedule pickup with agent assignment (matches Flutter _schedulePickup)
   schedulePickupWithAgent: async (requestId, agentId, agentName, pickupDate, pickupTime, pickupSlot, pickupPincode) => {
     try {

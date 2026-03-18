@@ -9,27 +9,63 @@ export default function Register() {
     email: '',
     phone: '',
     password: '',
-    confirmPassword: '',
-    secretCode: ''
+    confirmPassword: ''
   })
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [verifyingEmail, setVerifyingEmail] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const navigate = useNavigate()
 
-  // Secret code for admin registration (change this to your own secret)
-  const ADMIN_SECRET_CODE = 'BUYBACK2024ADMIN'
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+    if (e.target.name === 'email') setEmailVerified(false)
   }
 
+  // Step 1: Verify email is pre-approved in approved_admin_emails table
+  const handleVerifyEmail = async () => {
+    if (!formData.email?.trim()) {
+      setError('Please enter your email first')
+      return
+    }
+    setVerifyingEmail(true)
+    setError(null)
+    try {
+      // Check approved_admin_emails table
+      const { data, error: fetchErr } = await supabase
+        .from('approved_admin_emails')
+        .select('*')
+        .eq('email', formData.email.toLowerCase().trim())
+        .eq('is_active', true)
+        .maybeSingle()
+      if (fetchErr) throw fetchErr
+      if (!data) {
+        setError('This email is not authorized for admin registration. Please contact the system administrator to get your email approved.')
+        setEmailVerified(false)
+      } else {
+        setEmailVerified(true)
+        // Pre-fill name/phone if available
+        if (data.name && !formData.name) setFormData(prev => ({ ...prev, name: data.name }))
+        if (data.phone && !formData.phone) setFormData(prev => ({ ...prev, phone: data.phone }))
+      }
+    } catch (err) {
+      console.error('Email verification error:', err)
+      setError('Failed to verify email. Please try again.')
+    }
+    setVerifyingEmail(false)
+  }
+
+  // Step 2: Create account with verified email
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
 
-    // Validations
+    if (!emailVerified) {
+      setError('Please verify your email first')
+      return
+    }
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       return
@@ -38,14 +74,10 @@ export default function Register() {
       setError('Password must be at least 6 characters')
       return
     }
-    if (formData.secretCode !== ADMIN_SECRET_CODE) {
-      setError('Invalid admin secret code. Contact system administrator.')
-      return
-    }
 
     setIsLoading(true)
     try {
-      // 1. Create auth user
+      // 1. Create auth user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -55,9 +87,9 @@ export default function Register() {
       })
       if (authError) throw authError
 
-      // 2. Create admin record in admins table
+      // 2. Create admin record in admin_users table
       const { error: adminError } = await supabase
-        .from('admins')
+        .from('admin_users')
         .insert({
           id: authData.user.id,
           email: formData.email,
@@ -66,7 +98,23 @@ export default function Register() {
           role: 'admin',
           is_active: true
         })
-      if (adminError) throw adminError
+      if (adminError) {
+        // Fallback: try admins table
+        await supabase.from('admins').insert({
+          id: authData.user.id,
+          email: formData.email,
+          name: formData.name,
+          phone: formData.phone,
+          role: 'admin',
+          is_active: true
+        })
+      }
+
+      // 3. Mark email as used in approved_admin_emails
+      await supabase
+        .from('approved_admin_emails')
+        .update({ is_registered: true, registered_at: new Date().toISOString() })
+        .eq('email', formData.email.toLowerCase().trim())
 
       setSuccess(true)
       setTimeout(() => navigate('/login'), 3000)
@@ -138,7 +186,8 @@ export default function Register() {
 
           <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-6 sm:p-7">
             <h2 className="text-xl font-extrabold text-gray-900 mb-1">Admin Registration</h2>
-            <p className="text-gray-400 text-sm mb-5">Create your admin account</p>
+            <p className="text-gray-400 text-sm mb-1">Create your admin account</p>
+            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">Your email must be pre-approved by the system administrator before you can register.</p>
 
             {error && (
               <div className="mb-4 p-3 rounded-xl text-sm font-medium border bg-red-50 border-red-100 text-red-600 flex items-center gap-2">
@@ -148,35 +197,48 @@ export default function Register() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-3">
+              {/* Step 1: Email Verification */}
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Full Name *</label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="text" name="name" value={formData.name} onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
-                    placeholder="Your full name" required />
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Email * (must be pre-approved)</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type="email" name="email" value={formData.email} onChange={handleChange}
+                      className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-sm ${emailVerified ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}
+                      placeholder="your-email@example.com" required />
+                  </div>
+                  <button type="button" onClick={handleVerifyEmail} disabled={verifyingEmail || emailVerified}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold shrink-0 transition-all ${emailVerified ? 'bg-green-100 text-green-700' : 'bg-emerald-600 text-white hover:bg-emerald-700'} disabled:opacity-60`}>
+                    {verifyingEmail ? '...' : emailVerified ? 'Verified' : 'Verify'}
+                  </button>
                 </div>
+                {emailVerified && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Email verified! You can proceed.</p>}
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Email *</label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="email" name="email" value={formData.email} onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
-                    placeholder="admin@example.com" required />
-                </div>
-              </div>
+              {/* Step 2: Account details (only after email verified) */}
+              {emailVerified && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Full Name *</label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="text" name="name" value={formData.name} onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
+                        placeholder="Your full name" required />
+                    </div>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Phone</label>
-                <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
-                    placeholder="9876543210" />
-                </div>
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Phone</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
+                        placeholder="9876543210" />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -203,18 +265,7 @@ export default function Register() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Admin Secret Code *</label>
-                <div className="relative">
-                  <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="password" name="secretCode" value={formData.secretCode} onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
-                    placeholder="Enter admin secret code" required />
-                </div>
-                <p className="text-xs text-gray-400 mt-1">Contact system administrator for the secret code</p>
-              </div>
-
-              <button type="submit" disabled={isLoading}
+              <button type="submit" disabled={isLoading || !emailVerified}
                 className="w-full py-3 mt-2 gradient-admin text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

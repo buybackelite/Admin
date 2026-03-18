@@ -7,6 +7,7 @@ import Requests from './pages/Requests'
 import PriceEngine from './pages/PriceEngine'
 import ConditionDeductions from './pages/ConditionDeductions'
 import FraudAlerts from './pages/FraudAlerts'
+import AgentManagement from './pages/AgentManagement'
 import Login from './pages/Login'
 import Register from './pages/Register'
 
@@ -55,6 +56,7 @@ function App() {
           <Route path="price-engine" element={<PriceEngine />} />
           <Route path="condition-deductions" element={<ConditionDeductions />} />
           <Route path="fraud-alerts" element={<FraudAlerts />} />
+          <Route path="agents" element={<AgentManagement />} />
         </Route>
       </Routes>
     </BrowserRouter>

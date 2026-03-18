@@ -6,6 +6,7 @@ import {
   DollarSign, 
   Sliders,
   AlertTriangle,
+  Users,
   LogOut,
   Menu,
   X,
@@ -19,6 +20,7 @@ const navItems = [
   { path: '/price-engine', icon: DollarSign, label: 'Price Engine', mobileLabel: 'Pricing' },
   { path: '/condition-deductions', icon: Sliders, label: 'Conditions', mobileLabel: 'Conditions' },
   { path: '/fraud-alerts', icon: AlertTriangle, label: 'Fraud Alerts', mobileLabel: 'Alerts' },
+  { path: '/agents', icon: Users, label: 'Agent Management', mobileLabel: 'Agents' },
 ]
 
 export default function Layout() {
