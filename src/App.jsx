@@ -8,6 +8,7 @@ import PriceEngine from './pages/PriceEngine'
 import ConditionDeductions from './pages/ConditionDeductions'
 import FraudAlerts from './pages/FraudAlerts'
 import Login from './pages/Login'
+import Register from './pages/Register'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, checkAuth } = useStore()
@@ -40,6 +41,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route
           path="/"
           element={

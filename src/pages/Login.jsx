@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useStore } from '../store/useStore'
 import { Shield, Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle2 } from 'lucide-react'
 
@@ -104,7 +104,10 @@ export default function Login() {
             </form>
 
             <div className="mt-5 p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <p className="text-center text-[11px] text-gray-400">Admin access only. Contact administrator for credentials.</p>
+              <p className="text-center text-[11px] text-gray-400 mb-2">Admin access only. Contact administrator for credentials.</p>
+              <p className="text-center text-sm">
+                <Link to="/register" className="text-emerald-600 font-semibold hover:underline">Create Admin Account</Link>
+              </p>
             </div>
           </div>
         </div>

@@ -49,7 +49,7 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; user-select: none;
 @keyframes fade-in-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 .animate-fade-in-up { animation: fade-in-up 0.4s ease-out both; }
 
-/* Mobile Request Detail - Force vertical layout */
+/* Mobile Request Detail - Force vertical layout with proper bottom spacing */
 @media (max-width: 639px) {
   .mobile-detail-view { display: block !important; }
   .desktop-detail-view { display: none !important; }
@@ -67,6 +67,17 @@ nav a, nav button { -webkit-tap-highlight-color: transparent; user-select: none;
     display: flex !important;
     flex-direction: column !important;
     gap: 4px !important;
+  }
+  /* Fix bottom cut-off on mobile - add extra padding for safe area */
+  .mobile-safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px) !important;
+  }
+  /* Ensure detail panel scrolls properly on mobile */
+  .detail-scroll-container {
+    max-height: calc(100vh - 180px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 100px !important;
   }
 }
 @media (min-width: 640px) {

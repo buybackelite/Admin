@@ -207,7 +207,7 @@ export default function Requests() {
                 <button onClick={() => selectRequest(null)} className="hidden lg:block p-1.5 hover:bg-gray-200 rounded-lg"><X className="w-5 h-5" /></button>
               </div>
 
-              <div className="p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto flex-1 overscroll-contain">
+              <div className="p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto flex-1 overscroll-contain detail-scroll-container mobile-safe-bottom">
                 {/* MOBILE: Ultra Compact All-in-One View - uses CSS class for guaranteed mobile detection */}
                 <div className="mobile-detail-view space-y-2">
                   {/* Device Specs - 2 column vertical layout */}
