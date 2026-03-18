@@ -19,13 +19,28 @@ export default function Register() {
   const [success, setSuccess] = useState(false)
   const navigate = useNavigate()
 
+  // Check URL params for pre-filled email and verification status
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const email = urlParams.get('email')
+    const verified = urlParams.get('verified')
+    
+    if (email) {
+      setFormData(prev => ({ ...prev, email }))
+      if (verified === 'true') {
+        setEmailVerified(true)
+        setSuccess('Email verified! Please complete your registration.')
+      }
+    }
+  }, [])
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
     if (e.target.name === 'email') setEmailVerified(false)
   }
 
-  // Step 1: Verify email is pre-approved in approved_admin_emails table
-  const handleVerifyEmail = async () => {
+  // Step 1: Check if email is approved and send verification link
+  const handleSendVerification = async () => {
     if (!formData.email?.trim()) {
       setError('Please enter your email first')
       return
@@ -33,7 +48,7 @@ export default function Register() {
     setVerifyingEmail(true)
     setError(null)
     try {
-      // Check approved_admin_emails table
+      // Check if email is in approved_admin_emails table
       const { data, error: fetchErr } = await supabase
         .from('approved_admin_emails')
         .select('*')
@@ -43,16 +58,32 @@ export default function Register() {
       if (fetchErr) throw fetchErr
       if (!data) {
         setError('This email is not authorized for admin registration. Please contact the system administrator to get your email approved.')
-        setEmailVerified(false)
-      } else {
+        return
+      }
+
+      if (data.is_verified) {
         setEmailVerified(true)
+        setError(null)
         // Pre-fill name/phone if available
         if (data.name && !formData.name) setFormData(prev => ({ ...prev, name: data.name }))
         if (data.phone && !formData.phone) setFormData(prev => ({ ...prev, phone: data.phone }))
+        return
       }
+
+      // Send verification email using Supabase Auth
+      const { error: emailError } = await supabase.auth.signInWithOtp({
+        email: formData.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/verify-email?email=${encodeURIComponent(formData.email)}`
+        }
+      })
+
+      if (emailError) throw emailError
+
+      setSuccess('Verification link sent to your email! Please check your inbox and click the link to continue.')
     } catch (err) {
-      console.error('Email verification error:', err)
-      setError('Failed to verify email. Please try again.')
+      console.error('Send verification error:', err)
+      setError(err.message || 'Failed to send verification email. Please try again.')
     }
     setVerifyingEmail(false)
   }
@@ -207,12 +238,13 @@ export default function Register() {
                       className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-sm ${emailVerified ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}
                       placeholder="your-email@example.com" required />
                   </div>
-                  <button type="button" onClick={handleVerifyEmail} disabled={verifyingEmail || emailVerified}
+                  <button type="button" onClick={handleSendVerification} disabled={verifyingEmail || emailVerified}
                     className={`px-4 py-2.5 rounded-xl text-sm font-semibold shrink-0 transition-all ${emailVerified ? 'bg-green-100 text-green-700' : 'bg-emerald-600 text-white hover:bg-emerald-700'} disabled:opacity-60`}>
-                    {verifyingEmail ? '...' : emailVerified ? 'Verified' : 'Verify'}
+                    {verifyingEmail ? 'Sending...' : emailVerified ? 'Verified ✓' : 'Send Link'}
                   </button>
                 </div>
-                {emailVerified && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Email verified! You can proceed.</p>}
+                {emailVerified && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Email verified! Please complete your registration.</p>}
+                {success && !emailVerified && <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> {success}</p>}
               </div>
 
               {/* Step 2: Account details (only after email verified) */}
