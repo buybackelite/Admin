@@ -424,16 +424,17 @@ export default function Requests() {
                 {photos.length > 0 && (
                   <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><ZoomIn className="w-4 h-4 text-primary-500" /> Device Photos ({photos.length})</h4>
-                    {/* Main Photo Display */}
-                    <div className="relative bg-white rounded-lg border border-gray-200 mb-3">
+                    {/* Main Photo Display - Click to zoom */}
+                    <div className="relative bg-white rounded-lg border border-gray-200 mb-3 cursor-pointer" 
+                      onClick={() => { setPhotoGallery(photos); setSelectedPhoto(photos[currentPhotoIdx]); }}>
                       <img src={photos[currentPhotoIdx]} alt="" className="w-full h-48 sm:h-64 object-contain rounded-lg" />
                       {photos.length > 1 && (
                         <>
-                          <button onClick={() => setCurrentPhotoIdx(p => p > 0 ? p - 1 : photos.length - 1)}
+                          <button onClick={(e) => { e.stopPropagation(); setCurrentPhotoIdx(p => p > 0 ? p - 1 : photos.length - 1); }}
                             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70">
                             <ChevronLeft className="w-5 h-5" />
                           </button>
-                          <button onClick={() => setCurrentPhotoIdx(p => p < photos.length - 1 ? p + 1 : 0)}
+                          <button onClick={(e) => { e.stopPropagation(); setCurrentPhotoIdx(p => p < photos.length - 1 ? p + 1 : 0); }}
                             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70">
                             <ChevronRight className="w-5 h-5" />
                           </button>
@@ -442,6 +443,10 @@ export default function Requests() {
                           </div>
                         </>
                       )}
+                      {/* Zoom hint */}
+                      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                        <ZoomIn className="w-3 h-3" /> Click to zoom
+                      </div>
                     </div>
                     {/* Thumbnail Strip */}
                     <div className="flex gap-2 overflow-x-auto pb-1">
@@ -583,11 +588,66 @@ export default function Requests() {
         </div>
       </div>
 
-      {/* Photo Zoom */}
+      {/* Photo Zoom Modal with Navigation */}
       {selectedPhoto && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setSelectedPhoto(null)}>
-          <button className="absolute top-4 right-4 text-white hover:text-gray-300" onClick={() => setSelectedPhoto(null)}><X className="w-6 h-6" /></button>
-          <img src={selectedPhoto} alt="" className="max-w-full max-h-full object-contain" onClick={e => e.stopPropagation()} />
+        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center" onClick={() => setSelectedPhoto(null)}>
+          {/* Close button */}
+          <button className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 p-2" onClick={() => setSelectedPhoto(null)}>
+            <X className="w-7 h-7" />
+          </button>
+          
+          {/* Photo counter */}
+          {photoGallery.length > 1 && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-2 rounded-full z-10">
+              {currentPhotoIdx + 1} / {photoGallery.length}
+            </div>
+          )}
+          
+          {/* Left navigation */}
+          {photoGallery.length > 1 && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); setCurrentPhotoIdx(p => p > 0 ? p - 1 : photoGallery.length - 1); setSelectedPhoto(photoGallery[currentPhotoIdx > 0 ? currentPhotoIdx - 1 : photoGallery.length - 1]); }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full z-10 transition-colors"
+            >
+              <ChevronLeft className="w-8 h-8" />
+            </button>
+          )}
+          
+          {/* Main image */}
+          <img 
+            src={selectedPhoto} 
+            alt="" 
+            className="max-w-[90vw] max-h-[85vh] object-contain select-none" 
+            onClick={e => e.stopPropagation()} 
+            draggable={false}
+          />
+          
+          {/* Right navigation */}
+          {photoGallery.length > 1 && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); setCurrentPhotoIdx(p => p < photoGallery.length - 1 ? p + 1 : 0); setSelectedPhoto(photoGallery[currentPhotoIdx < photoGallery.length - 1 ? currentPhotoIdx + 1 : 0]); }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full z-10 transition-colors"
+            >
+              <ChevronRight className="w-8 h-8" />
+            </button>
+          )}
+          
+          {/* Thumbnail strip at bottom */}
+          {photoGallery.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 p-2 rounded-xl max-w-[90vw] overflow-x-auto">
+              {photoGallery.map((url, i) => (
+                <img 
+                  key={i} 
+                  src={url} 
+                  alt="" 
+                  onClick={(e) => { e.stopPropagation(); setCurrentPhotoIdx(i); setSelectedPhoto(url); }}
+                  className={`w-14 h-14 object-cover rounded cursor-pointer transition-all shrink-0 ${
+                    selectedPhoto === url ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-100'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
