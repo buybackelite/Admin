@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Shield, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Shield, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react'
 
 export default function Register() {
+  // Registration steps: 1=email, 2=otp, 3=details, 4=success
+  const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -11,41 +13,24 @@ export default function Register() {
     password: '',
     confirmPassword: ''
   })
-  const [emailVerified, setEmailVerified] = useState(false)
-  const [verifyingEmail, setVerifyingEmail] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
+  const [successMsg, setSuccessMsg] = useState('')
   const navigate = useNavigate()
-
-  // Check URL params for pre-filled email and verification status
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const email = urlParams.get('email')
-    const verified = urlParams.get('verified')
-    
-    if (email) {
-      setFormData(prev => ({ ...prev, email }))
-      if (verified === 'true') {
-        setEmailVerified(true)
-        setSuccess('Email verified! Please complete your registration.')
-      }
-    }
-  }, [])
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
-    if (e.target.name === 'email') setEmailVerified(false)
   }
 
-  // Step 1: Check if email is approved and send verification link
-  const handleSendVerification = async () => {
+  // Step 1: Check if email is approved and send OTP code
+  const handleSendOTP = async () => {
     if (!formData.email?.trim()) {
       setError('Please enter your email first')
       return
     }
-    setVerifyingEmail(true)
+    setIsLoading(true)
     setError(null)
     try {
       // Check if email is in approved_admin_emails table
@@ -55,69 +40,89 @@ export default function Register() {
         .eq('email', formData.email.toLowerCase().trim())
         .eq('is_active', true)
         .maybeSingle()
+      
       if (fetchErr) throw fetchErr
       if (!data) {
         setError('This email is not authorized for admin registration. Please contact the system administrator to get your email approved.')
+        setIsLoading(false)
         return
       }
 
-      if (data.is_verified) {
-        setEmailVerified(true)
-        setError(null)
-        // Pre-fill name/phone if available
-        if (data.name && !formData.name) setFormData(prev => ({ ...prev, name: data.name }))
-        if (data.phone && !formData.phone) setFormData(prev => ({ ...prev, phone: data.phone }))
+      // Check if already registered
+      if (data.is_registered) {
+        setError('This email is already registered. Please login instead.')
+        setIsLoading(false)
         return
       }
 
-      // Send verification email using Supabase Auth
-      const { error: emailError } = await supabase.auth.signInWithOtp({
+      // Pre-fill name/phone if available
+      if (data.name) setFormData(prev => ({ ...prev, name: data.name }))
+      if (data.phone) setFormData(prev => ({ ...prev, phone: data.phone }))
+
+      // Send OTP code using Supabase Auth
+      const { error: otpError } = await supabase.auth.signInWithOtp({
         email: formData.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/verify-email?email=${encodeURIComponent(formData.email)}`
+          shouldCreateUser: false // Don't create user yet, just send OTP
         }
       })
 
-      if (emailError) throw emailError
+      if (otpError) throw otpError
 
-      setSuccess('Verification link sent to your email! Please check your inbox and click the link to continue.')
+      setSuccessMsg('Verification code sent to your email!')
+      setStep(2) // Move to OTP entry step
     } catch (err) {
-      console.error('Send verification error:', err)
-      setError(err.message || 'Failed to send verification email. Please try again.')
+      console.error('Send OTP error:', err)
+      setError(err.message || 'Failed to send verification code. Please try again.')
     }
-    setVerifyingEmail(false)
+    setIsLoading(false)
   }
 
-  // Step 2: Create account with verified email
-  const handleSubmit = async (e) => {
+  // Step 2: Verify OTP code
+  const handleVerifyOTP = async () => {
+    if (!otpCode || otpCode.length < 6) {
+      setError('Please enter the 6-digit code from your email')
+      return
+    }
+    setIsLoading(true)
+    setError(null)
+    try {
+      // Verify OTP with Supabase
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: formData.email,
+        token: otpCode,
+        type: 'email'
+      })
+
+      if (verifyError) throw verifyError
+
+      // Sign out the temporary session (we'll create proper account later)
+      await supabase.auth.signOut()
+
+      // Mark email as verified in database
+      await supabase
+        .from('approved_admin_emails')
+        .update({ is_verified: true, verified_at: new Date().toISOString() })
+        .eq('email', formData.email.toLowerCase().trim())
+
+      setSuccessMsg('Email verified successfully!')
+      setStep(3) // Move to details step
+    } catch (err) {
+      console.error('Verify OTP error:', err)
+      setError('Invalid or expired code. Please try again.')
+    }
+    setIsLoading(false)
+  }
+
+  // Step 3: Create account with verified email
+  const handleCreateAccount = async (e) => {
     e.preventDefault()
     setError(null)
 
-    // CRITICAL: Double-check email verification from database
-    if (!emailVerified) {
-      setError('Please verify your email first by clicking "Send Link"')
+    if (!formData.name?.trim()) {
+      setError('Please enter your name')
       return
     }
-
-    // Verify email is actually verified in database before allowing registration
-    try {
-      const { data: verifyData, error: verifyErr } = await supabase
-        .from('approved_admin_emails')
-        .select('is_verified')
-        .eq('email', formData.email.toLowerCase().trim())
-        .eq('is_active', true)
-        .maybeSingle()
-      
-      if (verifyErr || !verifyData || !verifyData.is_verified) {
-        setError('Email not verified. Please click "Send Link" and verify your email first.')
-        setEmailVerified(false)
-        return
-      }
-    } catch (err) {
-      setError('Failed to verify email status. Please try again.')
-      return
-    }
-
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       return
@@ -129,12 +134,28 @@ export default function Register() {
 
     setIsLoading(true)
     try {
+      // Double-check email is verified in database
+      const { data: verifyData } = await supabase
+        .from('approved_admin_emails')
+        .select('is_verified')
+        .eq('email', formData.email.toLowerCase().trim())
+        .eq('is_active', true)
+        .maybeSingle()
+      
+      if (!verifyData?.is_verified) {
+        setError('Email not verified. Please start over.')
+        setStep(1)
+        setIsLoading(false)
+        return
+      }
+
       // 1. Create auth user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          data: { name: formData.name, role: 'admin' }
+          data: { name: formData.name, role: 'admin' },
+          emailRedirectTo: `${window.location.origin}/login`
         }
       })
       if (authError) throw authError
@@ -162,32 +183,53 @@ export default function Register() {
         })
       }
 
-      // 3. Mark email as used in approved_admin_emails
+      // 3. Mark email as registered in approved_admin_emails
       await supabase
         .from('approved_admin_emails')
         .update({ is_registered: true, registered_at: new Date().toISOString() })
         .eq('email', formData.email.toLowerCase().trim())
 
-      setSuccess(true)
-      setTimeout(() => navigate('/login'), 3000)
+      setStep(4) // Move to success step
     } catch (err) {
       console.error('Registration error:', err)
       setError(err.message || 'Registration failed. Please try again.')
-    } finally {
-      setIsLoading(false)
     }
+    setIsLoading(false)
   }
 
-  if (success) {
+  // Resend OTP
+  const handleResendOTP = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: formData.email,
+        options: { shouldCreateUser: false }
+      })
+      if (otpError) throw otpError
+      setSuccessMsg('New code sent to your email!')
+    } catch (err) {
+      setError('Failed to resend code. Please try again.')
+    }
+    setIsLoading(false)
+  }
+
+  // Step 4: Success screen
+  if (step === 4) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-green-600" />
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center animate-scale-in">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 className="w-10 h-10 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Successful!</h2>
-          <p className="text-gray-500 mb-4">Your admin account has been created. Please check your email to verify your account.</p>
-          <p className="text-sm text-gray-400">Redirecting to login...</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Created!</h2>
+          <p className="text-gray-500 mb-6">Your admin account has been created successfully. You can now login to access the admin panel.</p>
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full py-3 gradient-admin text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all"
+          >
+            Go to Login <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     )
@@ -237,9 +279,30 @@ export default function Register() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-6 sm:p-7">
-            <h2 className="text-xl font-extrabold text-gray-900 mb-1">Admin Registration</h2>
-            <p className="text-gray-400 text-sm mb-1">Create your admin account</p>
-            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">Your email must be pre-approved by the system administrator before you can register.</p>
+            {/* Step Indicator */}
+            <div className="flex items-center justify-center gap-2 mb-5">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                    step >= s ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    {step > s ? <CheckCircle2 className="w-4 h-4" /> : s}
+                  </div>
+                  {s < 3 && <div className={`w-8 h-0.5 ${step > s ? 'bg-emerald-600' : 'bg-gray-200'}`} />}
+                </div>
+              ))}
+            </div>
+
+            <h2 className="text-xl font-extrabold text-gray-900 mb-1 text-center">
+              {step === 1 && 'Enter Your Email'}
+              {step === 2 && 'Verify Your Email'}
+              {step === 3 && 'Complete Registration'}
+            </h2>
+            <p className="text-gray-400 text-sm mb-4 text-center">
+              {step === 1 && 'Your email must be pre-approved by the administrator'}
+              {step === 2 && 'Enter the 6-digit code sent to your email'}
+              {step === 3 && 'Fill in your details to create your account'}
+            </p>
 
             {error && (
               <div className="mb-4 p-3 rounded-xl text-sm font-medium border bg-red-50 border-red-100 text-red-600 flex items-center gap-2">
@@ -248,94 +311,153 @@ export default function Register() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Step 1: Email Verification */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Email * (must be pre-approved)</label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
+            {successMsg && (
+              <div className="mb-4 p-3 rounded-xl text-sm font-medium border bg-green-50 border-green-100 text-green-600 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                {successMsg}
+              </div>
+            )}
+
+            {/* Step 1: Email Entry */}
+            {step === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email Address *</label>
+                  <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type="email" name="email" value={formData.email} onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-sm ${emailVerified ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}
-                      placeholder="your-email@example.com" required />
+                    <input 
+                      type="email" 
+                      name="email" 
+                      value={formData.email} 
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
+                      placeholder="your-email@example.com" 
+                      required 
+                    />
                   </div>
-                  <button type="button" onClick={handleSendVerification} disabled={verifyingEmail || emailVerified}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold shrink-0 transition-all ${emailVerified ? 'bg-green-100 text-green-700' : 'bg-emerald-600 text-white hover:bg-emerald-700'} disabled:opacity-60`}>
-                    {verifyingEmail ? 'Sending...' : emailVerified ? 'Verified ✓' : 'Send Link'}
-                  </button>
                 </div>
-                {emailVerified && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Email verified! Please complete your registration.</p>}
-                {success && !emailVerified && <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> {success}</p>}
+                <button 
+                  type="button" 
+                  onClick={handleSendOTP} 
+                  disabled={isLoading}
+                  className="w-full py-3 gradient-admin text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>Send Verification Code <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </button>
               </div>
+            )}
 
-              {/* Step 2: Account details (only after email verified) */}
-              {emailVerified && (
-                <>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Full Name *</label>
-                    <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type="text" name="name" value={formData.name} onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
-                        placeholder="Your full name" required />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Phone</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
-                        placeholder="9876543210" />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
+            {/* Step 2: OTP Entry */}
+            {step === 2 && (
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Password *</label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Verification Code *</label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange}
+                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      value={otpCode} 
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm text-center tracking-[0.5em] font-mono text-lg"
+                      placeholder="000000" 
+                      maxLength={6}
+                      required 
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2 text-center">Code sent to: {formData.email}</p>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={handleVerifyOTP} 
+                  disabled={isLoading || otpCode.length < 6}
+                  className="w-full py-3 gradient-admin text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>Verify Code <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleResendOTP} 
+                  disabled={isLoading}
+                  className="w-full py-2.5 text-emerald-600 font-semibold text-sm hover:underline disabled:opacity-50"
+                >
+                  Didn't receive code? Resend
+                </button>
+              </div>
+            )}
+
+            {/* Step 3: Account Details */}
+            {step === 3 && (
+              <form onSubmit={handleCreateAccount} className="space-y-3">
+                <div className="p-3 bg-green-50 border border-green-100 rounded-xl mb-4">
+                  <p className="text-xs text-green-700 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Email verified: <strong>{formData.email}</strong>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Full Name *</label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type="text" name="name" value={formData.name} onChange={handleChange}
                       className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
-                      placeholder="••••••" required minLength={6} />
+                      placeholder="Your full name" required />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Confirm *</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type={showPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
-                      className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
-                      placeholder="••••••" required />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
 
-              <button type="submit" disabled={isLoading || !emailVerified}
-                className="w-full py-3 mt-2 gradient-admin text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all">
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : !emailVerified ? (
-                  <>Verify Email First</>
-                ) : (
-                  <>Create Admin Account <ArrowRight className="w-4 h-4" /></>
-                )}
-              </button>
-              
-              {!emailVerified && (
-                <p className="text-xs text-amber-600 mt-2 text-center flex items-center justify-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  You must verify your email before creating an account
-                </p>
-              )}
-            </form>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Phone (optional)</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
+                      placeholder="9876543210" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
+                        placeholder="••••••" required minLength={6} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Confirm *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type={showPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
+                        className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm"
+                        placeholder="••••••" required />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" disabled={isLoading}
+                  className="w-full py-3 mt-2 gradient-admin text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>Create Admin Account <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </button>
+              </form>
+            )}
 
             <p className="text-center text-sm text-gray-500 mt-5">
               Already have an account?{' '}
