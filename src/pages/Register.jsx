@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Shield, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react'
@@ -93,10 +93,31 @@ export default function Register() {
     e.preventDefault()
     setError(null)
 
+    // CRITICAL: Double-check email verification from database
     if (!emailVerified) {
-      setError('Please verify your email first')
+      setError('Please verify your email first by clicking "Send Link"')
       return
     }
+
+    // Verify email is actually verified in database before allowing registration
+    try {
+      const { data: verifyData, error: verifyErr } = await supabase
+        .from('approved_admin_emails')
+        .select('is_verified')
+        .eq('email', formData.email.toLowerCase().trim())
+        .eq('is_active', true)
+        .maybeSingle()
+      
+      if (verifyErr || !verifyData || !verifyData.is_verified) {
+        setError('Email not verified. Please click "Send Link" and verify your email first.')
+        setEmailVerified(false)
+        return
+      }
+    } catch (err) {
+      setError('Failed to verify email status. Please try again.')
+      return
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       return
@@ -298,13 +319,22 @@ export default function Register() {
               </div>
 
               <button type="submit" disabled={isLoading || !emailVerified}
-                className="w-full py-3 mt-2 gradient-admin text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
+                className="w-full py-3 mt-2 gradient-admin text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all">
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : !emailVerified ? (
+                  <>Verify Email First</>
                 ) : (
                   <>Create Admin Account <ArrowRight className="w-4 h-4" /></>
                 )}
               </button>
+              
+              {!emailVerified && (
+                <p className="text-xs text-amber-600 mt-2 text-center flex items-center justify-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  You must verify your email before creating an account
+                </p>
+              )}
             </form>
 
             <p className="text-center text-sm text-gray-500 mt-5">
