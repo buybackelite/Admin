@@ -18,12 +18,17 @@ body {
 .overflow-y-auto, .overflow-x-auto { -webkit-overflow-scrolling: touch; }
 nav a, nav button { -webkit-tap-highlight-color: transparent; user-select: none; }
 
+/* Admin dark sidebar */
+.admin-sidebar {
+  background: linear-gradient(180deg, #0f1729 0%, #1a2332 100%);
+}
+
 /* Glass morphism */
 .glass { background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 
 /* Card hover */
-.card-hover { transition: all 0.2s ease; }
-.card-hover:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(0,0,0,0.08); }
 
 /* Text gradient */
 .text-gradient {

@@ -102,8 +102,20 @@ export default function Requests() {
     if (!selectedRequest) return
     if (!window.confirm('Mark payment as completed?')) return
     const ok = await markPaymentDone(selectedRequest.id)
-    if (ok) showMsg('s', 'Payment marked as done!')
-    else showMsg('e', 'Failed to mark payment')
+    if (ok) {
+      showMsg('s', 'Payment marked as done!')
+      // Update selectedRequest with new payment status for realtime UI update
+      selectRequest({
+        ...selectedRequest,
+        bank_details: {
+          ...selectedRequest.bank_details,
+          payment_done: true,
+          payment_done_at: new Date().toISOString()
+        }
+      })
+    } else {
+      showMsg('e', 'Failed to mark payment')
+    }
   }
 
   // Copy to clipboard
@@ -166,11 +178,19 @@ export default function Requests() {
                   className={`px-3 py-2.5 cursor-pointer transition-colors hover:bg-gray-50 ${r?.id === req.id ? 'bg-primary-50 border-l-3 border-l-primary-500' : ''}`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-medium text-sm text-gray-900 truncate">{req.model_name || req.device_type}</span>
                         <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${statusBadge[req.status] || 'bg-gray-100 text-gray-600'}`}>
                           {req.status?.replace(/_/g, ' ')}
                         </span>
+                        {/* Payment status badge */}
+                        {req.status === 'Completed' && (
+                          req.bank_details?.payment_done ? (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">₹ Paid</span>
+                          ) : (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700">₹ Pending</span>
+                          )
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5">{req.users?.name || req.users?.phone || '—'}</p>
                       <div className="flex gap-3 mt-1 text-xs text-gray-500">
@@ -588,60 +608,67 @@ export default function Requests() {
         </div>
       </div>
 
-      {/* Photo Zoom Modal with Navigation */}
+      {/* Photo Zoom Modal with Navigation - Full screen, no scroll needed */}
       {selectedPhoto && (
-        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center" onClick={() => setSelectedPhoto(null)}>
-          {/* Close button */}
-          <button className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 p-2" onClick={() => setSelectedPhoto(null)}>
-            <X className="w-7 h-7" />
-          </button>
-          
-          {/* Photo counter */}
-          {photoGallery.length > 1 && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-2 rounded-full z-10">
-              {currentPhotoIdx + 1} / {photoGallery.length}
-            </div>
-          )}
-          
-          {/* Left navigation */}
-          {photoGallery.length > 1 && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); setCurrentPhotoIdx(p => p > 0 ? p - 1 : photoGallery.length - 1); setSelectedPhoto(photoGallery[currentPhotoIdx > 0 ? currentPhotoIdx - 1 : photoGallery.length - 1]); }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full z-10 transition-colors"
-            >
-              <ChevronLeft className="w-8 h-8" />
+        <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center overflow-hidden" onClick={() => setSelectedPhoto(null)}>
+          {/* Top bar with close and counter */}
+          <div className="absolute top-0 left-0 right-0 h-14 flex items-center justify-between px-4 z-20">
+            {/* Photo counter */}
+            {photoGallery.length > 1 && (
+              <div className="bg-black/60 text-white text-sm px-4 py-2 rounded-full">
+                {currentPhotoIdx + 1} / {photoGallery.length}
+              </div>
+            )}
+            {photoGallery.length <= 1 && <div />}
+            {/* Close button */}
+            <button className="text-white hover:text-gray-300 p-2 bg-black/40 rounded-full" onClick={() => setSelectedPhoto(null)}>
+              <X className="w-6 h-6" />
             </button>
-          )}
+          </div>
           
-          {/* Main image */}
-          <img 
-            src={selectedPhoto} 
-            alt="" 
-            className="max-w-[90vw] max-h-[85vh] object-contain select-none" 
-            onClick={e => e.stopPropagation()} 
-            draggable={false}
-          />
-          
-          {/* Right navigation */}
-          {photoGallery.length > 1 && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); setCurrentPhotoIdx(p => p < photoGallery.length - 1 ? p + 1 : 0); setSelectedPhoto(photoGallery[currentPhotoIdx < photoGallery.length - 1 ? currentPhotoIdx + 1 : 0]); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full z-10 transition-colors"
-            >
-              <ChevronRight className="w-8 h-8" />
-            </button>
-          )}
+          {/* Main content area - image with side navigation */}
+          <div className="flex-1 w-full flex items-center justify-center relative px-16 py-16">
+            {/* Left navigation */}
+            {photoGallery.length > 1 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); const newIdx = currentPhotoIdx > 0 ? currentPhotoIdx - 1 : photoGallery.length - 1; setCurrentPhotoIdx(newIdx); setSelectedPhoto(photoGallery[newIdx]); }}
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 sm:p-3 rounded-full z-10 transition-colors"
+              >
+                <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+              </button>
+            )}
+            
+            {/* Main image - constrained to viewport */}
+            <img 
+              src={selectedPhoto} 
+              alt="" 
+              className="max-w-full max-h-full object-contain select-none" 
+              style={{ maxHeight: 'calc(100vh - 140px)', maxWidth: 'calc(100vw - 100px)' }}
+              onClick={e => e.stopPropagation()} 
+              draggable={false}
+            />
+            
+            {/* Right navigation */}
+            {photoGallery.length > 1 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); const newIdx = currentPhotoIdx < photoGallery.length - 1 ? currentPhotoIdx + 1 : 0; setCurrentPhotoIdx(newIdx); setSelectedPhoto(photoGallery[newIdx]); }}
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 sm:p-3 rounded-full z-10 transition-colors"
+              >
+                <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+              </button>
+            )}
+          </div>
           
           {/* Thumbnail strip at bottom */}
           {photoGallery.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 p-2 rounded-xl max-w-[90vw] overflow-x-auto">
+            <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 p-2 rounded-xl max-w-[90vw] overflow-x-auto z-20">
               {photoGallery.map((url, i) => (
                 <img 
                   key={i} 
                   src={url} 
                   alt="" 
                   onClick={(e) => { e.stopPropagation(); setCurrentPhotoIdx(i); setSelectedPhoto(url); }}
-                  className={`w-14 h-14 object-cover rounded cursor-pointer transition-all shrink-0 ${
+                  className={`w-12 h-12 sm:w-14 sm:h-14 object-cover rounded cursor-pointer transition-all shrink-0 ${
                     selectedPhoto === url ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-100'
                   }`}
                 />

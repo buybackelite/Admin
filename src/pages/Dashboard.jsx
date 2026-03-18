@@ -9,7 +9,9 @@ import {
   TrendingUp,
   AlertTriangle,
   ArrowRight,
-  Shield
+  Laptop,
+  Tablet,
+  Users
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -22,37 +24,27 @@ export default function Dashboard() {
     fetchFraudAlerts()
   }, [])
 
-  const recentRequests = requests.slice(0, 5)
+  const recentRequests = requests.slice(0, 6)
 
   return (
-    <div className="space-y-5 animate-fade-in-up">
-      {/* Welcome Banner */}
-      <div className="relative rounded-2xl overflow-hidden gradient-admin p-5 lg:p-6">
-        <div className="absolute inset-0 noise-overlay" />
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl lg:text-2xl font-extrabold text-white">Dashboard</h1>
-            <p className="text-white/60 text-sm mt-0.5">Overview of your buyback platform</p>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/10">
-            <Shield className="w-4 h-4 text-white/70" />
-            <span className="text-white/80 text-xs font-medium">Admin</span>
-          </div>
-        </div>
+    <div className="space-y-6 animate-fade-in-up">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-xl lg:text-2xl font-extrabold text-gray-900">Dashboard</h1>
+        <p className="text-gray-400 text-sm mt-0.5">Overview of your buyback platform</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={ShoppingBag} label="Total Requests" value={stats.totalRequests} trend="+12%" color="blue" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <StatCard icon={ShoppingBag} label="Total Requests" value={stats.totalRequests} color="blue" />
         <StatCard icon={Clock} label="Pending" value={stats.pendingRequests} color="amber" />
         <StatCard icon={CheckCircle} label="Completed" value={stats.completedRequests} color="emerald" />
         <StatCard icon={DollarSign} label="Total Value" value={`₹${(stats.totalRevenue || 0).toLocaleString()}`} color="violet" />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        {/* Recent Requests */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="grid lg:grid-cols-5 gap-4">
+        {/* Recent Requests - takes 3 cols */}
+        <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
             <h2 className="font-bold text-gray-900 text-sm">Recent Requests</h2>
             <button onClick={() => navigate('/requests')}
@@ -63,39 +55,86 @@ export default function Dashboard() {
           {recentRequests.length === 0 ? (
             <div className="p-10 text-center text-gray-400 text-sm">No requests yet</div>
           ) : (
-            <div className="divide-y divide-gray-50">
-              {recentRequests.slice(0, 5).map((request) => (
-                <div key={request.id}
-                  className="px-5 py-3 hover:bg-gray-50/80 transition-colors cursor-pointer"
-                  onClick={() => { selectRequest(request); navigate('/requests') }}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{request.model_name || request.device_type}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{request.users?.name || request.users?.phone || 'Unknown'}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-bold text-gray-900 text-sm">₹{(request.system_estimated_price || 0).toLocaleString()}</p>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                        request.status === 'Pending' ? 'bg-amber-50 text-amber-600' :
-                        request.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' :
-                        'bg-blue-50 text-blue-600'
-                      }`}>
-                        <span className={`w-1 h-1 rounded-full ${
-                          request.status === 'Pending' ? 'bg-amber-500' :
-                          request.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500'
-                        }`} />
-                        {request.status?.replace(/_/g, ' ')}
-                      </span>
+            <>
+              {/* Desktop table */}
+              <div className="hidden sm:block">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-50">
+                      <th className="text-left px-5 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Device</th>
+                      <th className="text-left px-5 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Customer</th>
+                      <th className="text-right px-5 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Price</th>
+                      <th className="text-right px-5 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {recentRequests.map((request) => (
+                      <tr key={request.id}
+                        className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                        onClick={() => { selectRequest(request); navigate('/requests') }}>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                              request.device_type === 'MacBook' ? 'bg-indigo-50' : 'bg-emerald-50'
+                            }`}>
+                              {request.device_type === 'MacBook' 
+                                ? <Laptop className="w-3.5 h-3.5 text-indigo-600" />
+                                : <Tablet className="w-3.5 h-3.5 text-emerald-600" />}
+                            </div>
+                            <span className="font-semibold text-gray-900 text-sm truncate">{request.model_name || request.device_type}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-gray-500">{request.users?.name || request.users?.phone || 'Unknown'}</td>
+                        <td className="px-5 py-3 text-right font-bold text-sm text-gray-900">₹{(request.system_estimated_price || 0).toLocaleString()}</td>
+                        <td className="px-5 py-3 text-right">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            request.status === 'Pending' ? 'bg-amber-50 text-amber-600' :
+                            request.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' :
+                            'bg-blue-50 text-blue-600'
+                          }`}>
+                            <span className={`w-1 h-1 rounded-full ${
+                              request.status === 'Pending' ? 'bg-amber-500' :
+                              request.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500'
+                            }`} />
+                            {request.status?.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Mobile list */}
+              <div className="sm:hidden divide-y divide-gray-50">
+                {recentRequests.map((request) => (
+                  <div key={request.id}
+                    className="px-4 py-3 hover:bg-gray-50/80 transition-colors cursor-pointer"
+                    onClick={() => { selectRequest(request); navigate('/requests') }}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm truncate">{request.model_name || request.device_type}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{request.users?.name || 'Unknown'}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-gray-900 text-sm">₹{(request.system_estimated_price || 0).toLocaleString()}</p>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          request.status === 'Pending' ? 'bg-amber-50 text-amber-600' :
+                          request.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' :
+                          'bg-blue-50 text-blue-600'
+                        }`}>
+                          {request.status?.replace(/_/g, ' ')}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
-        {/* Fraud Alerts */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+        {/* Right Column: Fraud Alerts */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
             <h2 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
               <AlertTriangle className="w-3.5 h-3.5 text-red-500" /> Fraud Alerts
@@ -133,29 +172,26 @@ export default function Dashboard() {
   )
 }
 
-function StatCard({ icon: Icon, label, value, trend, color }) {
+function StatCard({ icon: Icon, label, value, color }) {
   const colors = {
-    blue: { bg: 'bg-blue-50', icon: 'text-blue-600' },
-    amber: { bg: 'bg-amber-50', icon: 'text-amber-600' },
-    emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600' },
-    violet: { bg: 'bg-violet-50', icon: 'text-violet-600' },
+    blue: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-100' },
+    amber: { bg: 'bg-amber-50', icon: 'text-amber-600', border: 'border-amber-100' },
+    emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', border: 'border-emerald-100' },
+    violet: { bg: 'bg-violet-50', icon: 'text-violet-600', border: 'border-violet-100' },
   }
   const c = colors[color] || colors.blue
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 card-hover shadow-sm">
-      <div className="flex items-center justify-between mb-2.5">
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${c.bg}`}>
-          <Icon className={`w-[18px] h-[18px] ${c.icon}`} />
+    <div className={`bg-white rounded-xl border ${c.border} p-4 card-hover shadow-sm`}>
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${c.bg}`}>
+          <Icon className={`w-5 h-5 ${c.icon}`} />
         </div>
-        {trend && (
-          <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-full">
-            <TrendingUp className="w-2.5 h-2.5" />{trend}
-          </span>
-        )}
+        <div>
+          <p className="text-lg lg:text-xl font-extrabold text-gray-900">{value}</p>
+          <p className="text-[11px] text-gray-400">{label}</p>
+        </div>
       </div>
-      <p className="text-xl font-extrabold text-gray-900">{value}</p>
-      <p className="text-xs text-gray-400 mt-0.5">{label}</p>
     </div>
   )
 }
