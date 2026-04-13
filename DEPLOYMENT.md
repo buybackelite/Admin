@@ -30,7 +30,7 @@ git push -u origin main
    - **Output Directory**: dist
 
 4. Add Environment Variables:
-   - `VITE_SUPABASE_URL`: https://hfkmdctdpujhviwmribc.supabase.co
+   - `VITE_SUPABASE_URL`: https://zdyzqbufilsfesdusfci.supabase.co
    - `VITE_SUPABASE_ANON_KEY`: your_supabase_anon_key
 
 5. Click **Deploy**

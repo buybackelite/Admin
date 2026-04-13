@@ -8,9 +8,11 @@ import PriceEngine from './pages/PriceEngine'
 import ConditionDeductions from './pages/ConditionDeductions'
 import FraudAlerts from './pages/FraudAlerts'
 import AgentManagement from './pages/AgentManagement'
+import Notifications from './pages/Notifications'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
+import ResetPassword from './pages/ResetPassword'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, checkAuth } = useStore()
@@ -45,6 +47,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/"
           element={
@@ -59,6 +62,7 @@ function App() {
           <Route path="condition-deductions" element={<ConditionDeductions />} />
           <Route path="fraud-alerts" element={<FraudAlerts />} />
           <Route path="agents" element={<AgentManagement />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
       </Routes>
     </BrowserRouter>

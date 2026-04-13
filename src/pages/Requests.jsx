@@ -58,6 +58,11 @@ export default function Requests() {
   const [pickupDate, setPickupDate] = useState('')
   const [pickupTime, setPickupTime] = useState('')
 
+  // WhatsApp popup state
+  const [showWAPopup, setShowWAPopup] = useState(false)
+  const [waPhone, setWaPhone] = useState('')
+  const [waMessage, setWaMessage] = useState('')
+
   useEffect(() => { fetchRequests(statusFilter) }, [statusFilter])
   useEffect(() => { fetchAgents() }, [])
 
@@ -71,7 +76,35 @@ export default function Requests() {
   })
 
   const openMaps = (loc) => loc?.latitude && loc?.longitude && window.open(`https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`, '_blank')
-  const openWA = (ph) => ph && window.open(`https://wa.me/91${ph.replace(/\D/g, '')}`, '_blank')
+  
+  const openWAPopup = (phone, customerName, deviceModel, status) => {
+    if (!phone) return
+    const name = customerName || 'Customer'
+    const device = deviceModel || 'device'
+    let defaultMsg = ''
+    if (status === 'Pending' || status === 'Reviewing') {
+      defaultMsg = `Hi ${name}, thank you for submitting your ${device} on BuyBack Elite. We are reviewing your request and will share the best offer soon. Stay tuned!`
+    } else if (status === 'Counter_Offered' || status === 'Offer_Accepted') {
+      defaultMsg = `Hi ${name}, we have an offer for your ${device} on BuyBack Elite. Please check the app for details. Thank you!`
+    } else if (status === 'Pickup_Scheduled' || status === 'Agent_Assigned') {
+      defaultMsg = `Hi ${name}, your pickup for ${device} has been scheduled. Our agent will arrive shortly. Please keep the device and ID proof ready.`
+    } else if (status === 'Completed') {
+      defaultMsg = `Hi ${name}, your ${device} deal is completed! Payment will be processed shortly. Thank you for choosing BuyBack Elite!`
+    } else {
+      defaultMsg = `Hi ${name}, this is an update regarding your ${device} sell request on BuyBack Elite.`
+    }
+    setWaPhone(phone)
+    setWaMessage(defaultMsg)
+    setShowWAPopup(true)
+  }
+
+  const sendWAMessage = () => {
+    if (!waPhone) return
+    const digits = waPhone.replace(/\D/g, '')
+    const number = digits.length === 10 ? `91${digits}` : digits
+    window.open(`https://wa.me/${number}?text=${encodeURIComponent(waMessage)}`, '_blank')
+    setShowWAPopup(false)
+  }
 
   const handleSchedulePickup = async () => {
     if (!selectedRequest || !selAgent || !pickupDate || !pickupTime) return
@@ -258,7 +291,7 @@ export default function Requests() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1"><UserCheck className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-gray-500 uppercase">Customer</span></div>
                       <div className="flex items-center gap-2">
-                        {r.users?.phone && <button onClick={() => openWA(r.users.phone)} className="p-1 bg-green-100 text-green-600 rounded"><MessageCircle className="w-3 h-3" /></button>}
+                        {r.users?.phone && <button onClick={() => openWAPopup(r.users.phone, r.users?.name, r.model_name || r.device_type, r.status)} className="p-1 bg-green-100 text-green-600 rounded" title="WhatsApp Customer"><MessageCircle className="w-3 h-3" /></button>}
                         {r.user_location && <button onClick={() => openMaps(r.user_location)} className="p-1 bg-blue-100 text-blue-600 rounded"><MapPin className="w-3 h-3" /></button>}
                       </div>
                     </div>
@@ -323,7 +356,7 @@ export default function Requests() {
                       {r.users?.phone && (
                         <span className="flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5 text-gray-400" /> {r.users.phone}
-                          <button onClick={() => openWA(r.users.phone)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"><MessageCircle className="w-3 h-3" /></button>
+                          <button onClick={() => openWAPopup(r.users.phone, r.users?.name, r.model_name || r.device_type, r.status)} className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200" title="WhatsApp Customer"><MessageCircle className="w-3 h-3" /></button>
                         </span>
                       )}
                       {r.users?.email && <span className="text-gray-500">{r.users.email}</span>}
@@ -607,6 +640,43 @@ export default function Requests() {
           )}
         </div>
       </div>
+
+      {/* WhatsApp Message Popup */}
+      {showWAPopup && (
+        <div className="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center p-4" onClick={() => setShowWAPopup(false)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Send WhatsApp Message</h3>
+                  <p className="text-xs text-gray-500">To: {waPhone}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowWAPopup(false)} className="p-1.5 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <textarea
+              value={waMessage}
+              onChange={e => setWaMessage(e.target.value)}
+              rows={5}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              placeholder="Type your message..."
+            />
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setShowWAPopup(false)} className="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                Cancel
+              </button>
+              <button onClick={sendWAMessage} className="flex-1 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center justify-center gap-1.5">
+                <Send className="w-4 h-4" /> Send via WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Photo Zoom Modal with Navigation - Full screen, no scroll needed */}
       {selectedPhoto && (

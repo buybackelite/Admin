@@ -172,15 +172,8 @@ export default function Register() {
           is_active: true
         })
       if (adminError) {
-        // Fallback: try admins table
-        await supabase.from('admins').insert({
-          id: authData.user.id,
-          email: formData.email,
-          name: formData.name,
-          phone: formData.phone,
-          role: 'admin',
-          is_active: true
-        })
+        console.error('Failed to insert into admin_users:', adminError.message)
+        throw adminError
       }
 
       // 3. Mark email as registered in approved_admin_emails

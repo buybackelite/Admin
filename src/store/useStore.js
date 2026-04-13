@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
+import { notifyCustomer } from '../lib/notifications'
 
 export const useStore = create((set, get) => ({
   // Auth State
@@ -48,30 +49,9 @@ export const useStore = create((set, get) => ({
         return adminUser.is_active !== false ? adminUser : null
       }
 
-      // Legacy fallback: admins table
-      try {
-        const { data: legacyAdmin } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('email', email)
-          .maybeSingle()
-        if (legacyAdmin) return legacyAdmin
-      } catch {}
-
-      // Optional fallback: users.role
-      try {
-        const { data: userResp } = await supabase
-          .from('users')
-          .select('id, role, name, email')
-          .eq('email', email)
-          .maybeSingle()
-        if (userResp?.role === 'admin') return userResp
-      } catch {}
-
       return null
     } catch {
-      // If tables don't exist, allow login
-      return { email, name: email.split('@')[0] }
+      return null
     }
   },
 
@@ -217,6 +197,13 @@ export const useStore = create((set, get) => ({
   updateRequestStatus: async (requestId, status, additionalData = {}) => {
     set({ isLoading: true })
     try {
+      // Get the request first to know the customer user_id
+      const { data: request } = await supabase
+        .from('sell_requests')
+        .select('user_id, device_name, model_name')
+        .eq('id', requestId)
+        .single()
+
       const { error } = await supabase
         .from('sell_requests')
         .update({ status, ...additionalData })
@@ -224,6 +211,23 @@ export const useStore = create((set, get) => ({
       
       if (error) throw error
       
+      // Send push notification to customer
+      if (request?.user_id) {
+        const statusMessages = {
+          'Offer_Accepted': { title: 'Offer Accepted! 🎉', body: `Your ${request.device_name || request.model_name || 'device'} sell request has been accepted.` },
+          'Rejected': { title: 'Request Update', body: `Your ${request.device_name || request.model_name || 'device'} sell request has been reviewed.` },
+          'Counter_Offered': { title: 'New Counter Offer! 💰', body: `We have a new offer for your ${request.device_name || request.model_name || 'device'}.` },
+          'Pickup_Scheduled': { title: 'Pickup Scheduled! 📦', body: `Pickup has been scheduled for your ${request.device_name || request.model_name || 'device'}.` },
+          'Completed': { title: 'Transaction Complete! ✅', body: `Your ${request.device_name || request.model_name || 'device'} sell request is now complete.` },
+        }
+        const msg = statusMessages[status]
+        if (msg) {
+          notifyCustomer(request.user_id, msg.title, msg.body, { request_id: requestId, status }).catch(err => 
+            console.error('Push notification failed (non-blocking):', err)
+          )
+        }
+      }
+
       // Refresh requests
       await get().fetchRequests()
       set({ isLoading: false })

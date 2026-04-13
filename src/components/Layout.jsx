@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { requestNotificationPermission, saveFcmTokenToSupabase, onForegroundMessage } from '../lib/firebase'
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard', mobileLabel: 'Home' },
@@ -35,6 +36,25 @@ export default function Layout() {
   useEffect(() => {
     subscribeToRealtime()
     return () => unsubscribeFromRealtime()
+  }, [])
+
+  // Setup FCM push notifications
+  useEffect(() => {
+    async function setupNotifications() {
+      try {
+        const token = await requestNotificationPermission();
+        if (token) {
+          await saveFcmTokenToSupabase(token);
+        }
+      } catch (err) {
+        console.error('Notification setup failed:', err);
+      }
+    }
+    setupNotifications();
+
+    onForegroundMessage((payload) => {
+      console.log('🔔 Admin received foreground notification:', payload);
+    });
   }, [])
 
   const handleLogout = async () => {
@@ -162,7 +182,7 @@ export default function Layout() {
 
           {/* Right side actions */}
           <div className="flex items-center gap-2">
-            <button className="relative p-2 hover:bg-gray-100 rounded-xl transition-colors">
+            <button onClick={() => navigate('/notifications')} className="relative p-2 hover:bg-gray-100 rounded-xl transition-colors">
               <Bell className="w-[18px] h-[18px] text-gray-400" />
               {alertCount > 0 && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
