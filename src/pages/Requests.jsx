@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '../store/useStore'
+import { supabase } from '../lib/supabase'
 import { 
   Search, MapPin, Phone, MessageCircle, X, Check, IndianRupee,
   ChevronRight, ChevronLeft, ExternalLink, ZoomIn, Truck, Calendar,
   UserCheck, CheckCircle2, Eye, CreditCard, Banknote, Copy, XCircle, Send,
-  FileText, Camera, ShieldCheck
+  FileText, Camera, ShieldCheck, Store, Package, AlertCircle
 } from 'lucide-react'
 
 const statusOptions = [
@@ -170,8 +171,10 @@ export default function Requests() {
   const photos = r?.photos_url || []
   const specs = r?.specs || {}
   const cond = r?.condition_answers || {}
-  const canSchedule = ['Pending', 'Reviewing', 'Offer_Accepted'].includes(r?.status)
-  const canComplete = ['Pickup_Scheduled', 'Agent_En_Route', 'Agent_Arrived', 'Picked_Up'].includes(r?.status)
+  const isStoreVisit = r?.delivery_method === 'self_drop'
+  const canSchedule = ['Pending', 'Reviewing', 'Offer_Accepted'].includes(r?.status) && !isStoreVisit
+  const canStoreAction = ['Pending', 'Reviewing', 'Offer_Accepted'].includes(r?.status) && isStoreVisit
+  const canComplete = ['Pickup_Scheduled', 'Agent_En_Route', 'Agent_Arrived', 'Picked_Up'].includes(r?.status) || (isStoreVisit && ['Pending', 'Reviewing', 'Offer_Accepted', 'Pickup_Scheduled'].includes(r?.status))
 
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -570,6 +573,58 @@ export default function Requests() {
                   <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                     <h4 className="text-sm font-bold text-amber-700 uppercase mb-2 flex items-center gap-1.5"><FileText className="w-4 h-4" /> Agent Notes</h4>
                     <p className="text-sm text-gray-800">{r.admin_notes}</p>
+                  </div>
+                )}
+
+                {/* Delivery Method Badge */}
+                {r && (
+                  <div className={`rounded-xl p-3 border flex items-center gap-3 ${isStoreVisit ? 'bg-indigo-50 border-indigo-200' : 'bg-purple-50 border-purple-200'}`}>
+                    {isStoreVisit ? <Store className="w-5 h-5 text-indigo-600" /> : <Truck className="w-5 h-5 text-purple-600" />}
+                    <div className="flex-1">
+                      <span className={`font-bold text-sm ${isStoreVisit ? 'text-indigo-700' : 'text-purple-700'}`}>
+                        {isStoreVisit ? 'Visit Store' : 'Home Pickup'}
+                      </span>
+                      <p className="text-xs text-gray-500">{isStoreVisit ? 'Customer will drop device at store' : 'Agent will pick up from customer'}</p>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full text-white ${isStoreVisit ? 'bg-indigo-600' : 'bg-purple-600'}`}>
+                      {isStoreVisit ? 'STORE' : 'PICKUP'}
+                    </span>
+                  </div>
+                )}
+
+                {/* Store Visit Section */}
+                {canStoreAction && (
+                  <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-200">
+                    <h4 className="text-sm font-bold text-indigo-600 uppercase mb-3 flex items-center gap-1.5"><Store className="w-4 h-4" /> Store Visit</h4>
+                    <div className="bg-white rounded-lg p-3 border border-indigo-100 mb-3">
+                      <p className="font-semibold text-sm text-gray-900">Macintosh Enterprise</p>
+                      <p className="text-xs text-gray-600 mt-1">Shop No. 157, 1st Floor, The Great India Place, Sector 38A, Noida – 201301, UP, India</p>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-100 mb-3 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-blue-700">No agent assignment needed. Customer will visit the store.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <button onClick={() => {
+                        const phone = r?.users?.phone || r?.customer_phone
+                        if (!phone) { showMsg('e', 'No phone number'); return }
+                        const digits = phone.replace(/\D/g, '')
+                        const number = digits.length === 10 ? `91${digits}` : digits
+                        const msg = `Hi ${r?.users?.name || 'Customer'}, your sell request for ${r?.model_name || r?.device_type} has been reviewed.\n\nPlease visit our store:\nMacintosh Enterprise\nShop No. 157, 1st Floor, The Great India Place, Sector 38A, Noida – 201301\n\nBring your device and a valid ID. Thank you! - BuyBack Elite`
+                        window.open(`https://wa.me/${number}?text=${encodeURIComponent(msg)}`, '_blank')
+                      }} className="w-full py-2 text-sm font-semibold text-green-700 border border-green-300 rounded-lg hover:bg-green-50 flex items-center justify-center gap-1.5">
+                        <MessageCircle className="w-4 h-4" /> WhatsApp - Store Visit Directions
+                      </button>
+                      <button onClick={async () => {
+                        try {
+                          await supabase.from('sell_requests').update({ status: 'Pickup_Scheduled', admin_notes: 'Device received at store' }).eq('id', r.id)
+                          showMsg('s', 'Marked as received at store')
+                          fetchRequests(statusFilter)
+                        } catch (e) { showMsg('e', 'Error: ' + e.message) }
+                      }} className="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-1.5">
+                        <Package className="w-4 h-4" /> Mark Device Received at Store
+                      </button>
+                    </div>
                   </div>
                 )}
 
