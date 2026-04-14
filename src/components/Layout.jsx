@@ -14,6 +14,7 @@ import {
   Bell,
   Settings,
   ChevronRight,
+  TrendingUp,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { requestNotificationPermission, saveFcmTokenToSupabase, onForegroundMessage } from '../lib/firebase'
@@ -25,6 +26,7 @@ const navItems = [
   { path: '/condition-deductions', icon: Sliders, label: 'Conditions', mobileLabel: 'Conditions' },
   { path: '/fraud-alerts', icon: AlertTriangle, label: 'Fraud Alerts', mobileLabel: 'Alerts', alertBadge: true },
   { path: '/agents', icon: Users, label: 'Agent Mgmt', mobileLabel: 'Agents' },
+  { path: '/cashify-prices', icon: TrendingUp, label: 'Cashify Prices', mobileLabel: 'Market' },
 ]
 
 export default function Layout() {

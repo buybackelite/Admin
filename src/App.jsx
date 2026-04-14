@@ -9,6 +9,7 @@ import ConditionDeductions from './pages/ConditionDeductions'
 import FraudAlerts from './pages/FraudAlerts'
 import AgentManagement from './pages/AgentManagement'
 import Notifications from './pages/Notifications'
+import CashifyPrices from './pages/CashifyPrices'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
@@ -63,6 +64,7 @@ function App() {
           <Route path="fraud-alerts" element={<FraudAlerts />} />
           <Route path="agents" element={<AgentManagement />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="cashify-prices" element={<CashifyPrices />} />
         </Route>
       </Routes>
     </BrowserRouter>

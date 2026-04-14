@@ -59,6 +59,9 @@ export default function Requests() {
   const [pickupDate, setPickupDate] = useState('')
   const [pickupTime, setPickupTime] = useState('')
 
+  // Cashify reference price for selected request
+  const [cashifyRef, setCashifyRef] = useState(null)
+
   // WhatsApp popup state
   const [showWAPopup, setShowWAPopup] = useState(false)
   const [waPhone, setWaPhone] = useState('')
@@ -66,6 +69,18 @@ export default function Requests() {
 
   useEffect(() => { fetchRequests(statusFilter) }, [statusFilter])
   useEffect(() => { fetchAgents() }, [])
+
+  useEffect(() => {
+    if (!selectedRequest) { setCashifyRef(null); return }
+    const modelName = selectedRequest.model_name
+    if (!modelName) return
+    supabase.from('cashify_reference_prices').select('*')
+      .ilike('model_name', `%${modelName.split(' ').slice(0, 3).join(' ')}%`)
+      .limit(1)
+      .single()
+      .then(({ data }) => setCashifyRef(data || null))
+      .catch(() => setCashifyRef(null))
+  }, [selectedRequest?.id])
 
   const showMsg = (t, txt) => { setMsg({ t, txt }); setTimeout(() => setMsg(null), 3000) }
 
@@ -347,6 +362,17 @@ export default function Requests() {
                         <div className="flex justify-between"><span className="text-gray-500">Estimated</span><span className="font-bold text-gray-900 text-base">₹{(r.system_estimated_price || 0).toLocaleString()}</span></div>
                         {r.admin_offer_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Offer</span><span className="font-bold text-orange-600 text-base">₹{r.admin_offer_price.toLocaleString()}</span></div>}
                         {r.final_price > 0 && <div className="flex justify-between"><span className="text-gray-500">Final</span><span className="font-bold text-green-600 text-base">₹{r.final_price.toLocaleString()}</span></div>}
+                        {cashifyRef && (
+                          <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] text-gray-400 font-medium">Cashify Market</span>
+                              <span className="text-[11px] font-bold text-teal-600">₹{(cashifyRef.min_price || 0).toLocaleString()} – ₹{(cashifyRef.max_price || 0).toLocaleString()}</span>
+                            </div>
+                            {cashifyRef.cashify_url && (
+                              <a href={cashifyRef.cashify_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline">View on Cashify ↗</a>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
