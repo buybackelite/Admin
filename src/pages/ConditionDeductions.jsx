@@ -59,6 +59,55 @@ const DEFAULT_DEDUCTIONS = [
   { category: 'WiFi/Bluetooth', condition_name: 'Working', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
   { category: 'WiFi/Bluetooth', condition_name: 'Not working', value: 5000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
 
+  // Screen Discolouration
+  { category: 'ScreenDiscolouration', condition_name: 'No Discolouration', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'ScreenDiscolouration', condition_name: 'Minor Discolouration', value: 2000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'ScreenDiscolouration', condition_name: 'Major Discolouration', value: 5000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+
+  // Screen Spots
+  { category: 'ScreenSpots', condition_name: 'No spots on screen', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'ScreenSpots', condition_name: '1-2 minor spots on screen', value: 2000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'ScreenSpots', condition_name: 'Large/heavy visible spots on screen', value: 5000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+
+  // Lines on Screen
+  { category: 'ScreenLines', condition_name: 'No Lines', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'ScreenLines', condition_name: 'Visible lines on Screen', value: 4000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'ScreenLines', condition_name: 'Display Flickering', value: 5000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+  { category: 'ScreenLines', condition_name: 'Black Dots on Screen', value: 3000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+
+  // Dent on Top Panel
+  { category: 'DentTopPanel', condition_name: 'No Dents on top panel', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'DentTopPanel', condition_name: 'Upto 2 Minor Dents', value: 2000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'DentTopPanel', condition_name: 'More than 2 Minor Dents', value: 4000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'DentTopPanel', condition_name: '1 or more Major Dents', value: 7000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+
+  // Dent on Base Panel
+  { category: 'DentBasePanel', condition_name: 'No Dents on base panel', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'DentBasePanel', condition_name: 'Upto 2 Minor Dents', value: 2000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'DentBasePanel', condition_name: 'More than 2 Minor Dents', value: 4000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'DentBasePanel', condition_name: '1 or more Major Dents', value: 7000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+
+  // Loose Hinges
+  { category: 'LooseHinges', condition_name: 'No Loose Hinges', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'LooseHinges', condition_name: 'Yes - Loose Hinges', value: 5000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+
+  // Cracked or Loose Panel
+  { category: 'CrackedLoosePanel', condition_name: 'No Cracked or Loose Panel', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'CrackedLoosePanel', condition_name: 'Loose Panel', value: 4000, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'CrackedLoosePanel', condition_name: 'Crack/Damage Panel', value: 8000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+
+  // Charging Port
+  { category: 'ChargingPort', condition_name: 'Working', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'ChargingPort', condition_name: 'Not working', value: 5000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+
+  // Hard Drive
+  { category: 'HardDrive', condition_name: 'Working', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'HardDrive', condition_name: 'Missing/Defective', value: 8000, deduction_type: 'FLAT', impact_level: 'CRITICAL' },
+
+  // Motherboard
+  { category: 'Motherboard', condition_name: 'Working fine', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
+  { category: 'Motherboard', condition_name: 'Issue - auto restart/hanging/heating/not booting', value: 15000, deduction_type: 'SCRAP_TRIGGER', impact_level: 'CRITICAL' },
+
   // Storage
   { category: 'Storage', condition_name: '2TB', value: 0, deduction_type: 'FLAT', impact_level: 'MINOR' },
   { category: 'Storage', condition_name: '1TB', value: 5000, deduction_type: 'FLAT', impact_level: 'MINOR' },
@@ -107,6 +156,16 @@ const CATEGORY_CONFIG = {
   Speakers: { icon: Volume2, color: 'text-pink-600', bg: 'bg-pink-50' },
   Camera: { icon: Camera, color: 'text-gray-600', bg: 'bg-gray-100' },
   'WiFi/Bluetooth': { icon: Wifi, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  ScreenDiscolouration: { icon: Monitor, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+  ScreenSpots: { icon: Monitor, color: 'text-orange-600', bg: 'bg-orange-50' },
+  ScreenLines: { icon: Monitor, color: 'text-red-500', bg: 'bg-red-50' },
+  DentTopPanel: { icon: Smartphone, color: 'text-stone-600', bg: 'bg-stone-50' },
+  DentBasePanel: { icon: Smartphone, color: 'text-zinc-600', bg: 'bg-zinc-50' },
+  LooseHinges: { icon: Smartphone, color: 'text-rose-600', bg: 'bg-rose-50' },
+  CrackedLoosePanel: { icon: Smartphone, color: 'text-red-700', bg: 'bg-red-50' },
+  ChargingPort: { icon: Cable, color: 'text-amber-600', bg: 'bg-amber-50' },
+  HardDrive: { icon: HardDrive, color: 'text-slate-600', bg: 'bg-slate-100' },
+  Motherboard: { icon: Smartphone, color: 'text-red-800', bg: 'bg-red-100' },
   Storage: { icon: HardDrive, color: 'text-teal-600', bg: 'bg-teal-50' },
   RAM: { icon: MemoryStick, color: 'text-violet-600', bg: 'bg-violet-50' },
   Warranty: { icon: Shield, color: 'text-emerald-600', bg: 'bg-emerald-50' },
