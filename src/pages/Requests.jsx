@@ -324,17 +324,28 @@ export default function Requests() {
                   {Object.keys(cond).length > 0 && (
                     <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
                       <div className="flex items-center gap-1 mb-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /><span className="text-[10px] font-bold text-gray-500 uppercase">Conditions</span></div>
+                      {(cond.device_turns_on === false || cond.is_repairable === false) && (
+                        <div className="mb-1.5 px-2 py-1 bg-red-50 border border-red-300 rounded text-[10px] font-bold text-red-700 flex items-center gap-1">
+                          ⚠ {cond.device_turns_on === false ? 'Device does not turn on' : 'Device was repaired before'} — Not Acceptable
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-x-2 gap-y-0 text-[10px]">
                         {Object.entries(cond)
                           .filter(([k]) => !k.toLowerCase().includes('photo') && !k.toLowerCase().includes('url'))
-                          .map(([k, v]) => (
-                          <div key={k} className="flex justify-between py-0.5 border-b border-gray-100">
-                            <span className="text-gray-500 truncate">{k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}</span>
-                            <span className={`font-semibold shrink-0 ml-1 ${typeof v === 'boolean' ? (v ? 'text-green-600' : 'text-red-500') : 'text-gray-800'}`}>
-                              {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}
-                            </span>
-                          </div>
-                        ))}
+                          .map(([k, v]) => {
+                            const isRepairKey = k === 'is_repairable' || k === 'isRepairable'
+                            const label = isRepairKey ? 'Repaired Before' : k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()
+                            const displayVal = isRepairKey ? (v === false ? 'Yes' : 'No') : (typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v))
+                            const isGood = isRepairKey ? v !== false : (typeof v !== 'boolean' || v)
+                            return (
+                              <div key={k} className="flex justify-between py-0.5 border-b border-gray-100">
+                                <span className="text-gray-500 truncate">{label}</span>
+                                <span className={`font-semibold shrink-0 ml-1 ${typeof v === 'boolean' ? (isGood ? 'text-green-600' : 'text-red-500') : 'text-gray-800'}`}>
+                                  {displayVal}
+                                </span>
+                              </div>
+                            )
+                          })}
                       </div>
                     </div>
                   )}
@@ -397,17 +408,28 @@ export default function Requests() {
                   {Object.keys(cond).length > 0 && (
                     <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                       <h4 className="text-sm font-bold text-gray-600 uppercase mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary-500" /> Conditions</h4>
+                      {(cond.device_turns_on === false || cond.is_repairable === false) && (
+                        <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-300 rounded-lg text-sm font-bold text-red-700">
+                          ⚠ {cond.device_turns_on === false ? 'Device does not turn on' : 'Device was repaired before'} — Not Acceptable
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                         {Object.entries(cond)
                           .filter(([k]) => !k.toLowerCase().includes('photo') && !k.toLowerCase().includes('url'))
-                          .map(([k, v]) => (
-                          <div key={k} className="flex justify-between py-1.5 border-b border-gray-100">
-                            <span className="text-gray-500 capitalize">{k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}</span>
-                            <span className={`font-semibold ${typeof v === 'boolean' ? (v ? 'text-green-600' : 'text-red-500') : 'text-gray-900'}`}>
-                              {typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)}
-                            </span>
-                          </div>
-                        ))}
+                          .map(([k, v]) => {
+                            const isRepairKey = k === 'is_repairable' || k === 'isRepairable'
+                            const label = isRepairKey ? 'Repaired Before' : k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()
+                            const displayVal = isRepairKey ? (v === false ? 'Yes' : 'No') : (typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v))
+                            const isGood = isRepairKey ? v !== false : (typeof v !== 'boolean' || v)
+                            return (
+                              <div key={k} className="flex justify-between py-1.5 border-b border-gray-100">
+                                <span className="text-gray-500 capitalize">{label}</span>
+                                <span className={`font-semibold ${typeof v === 'boolean' ? (isGood ? 'text-green-600' : 'text-red-500') : 'text-gray-900'}`}>
+                                  {displayVal}
+                                </span>
+                              </div>
+                            )
+                          })}
                       </div>
                       {/* Condition Photos */}
                       {(cond.screen_condition_photo_url || cond.body_condition_photo_url) && (
