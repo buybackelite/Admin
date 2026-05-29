@@ -4,12 +4,18 @@ import { createClient } from '@supabase/supabase-js'
 const CASHIFY_MODELS = [
   { model: 'MacBook Air M1 (2020)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-air-m1-chip-8-gb-ram-256-gb-ssd' },
   { model: 'MacBook Air M2 (2022)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-air-m2-chip-8-gb-ram-256-gb-ssd' },
+  { model: 'MacBook Air M2 15-inch (2023)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-air-15-inch-m2-chip-8-gb-ram-256-gb-ssd' },
   { model: 'MacBook Air M3 (2024)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-air-m3-chip-8-gb-ram-256-gb-ssd' },
+  { model: 'MacBook Pro M1 Pro 14-inch (2021)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-pro-14-inch-m1-pro-chip-16-gb-ram-512-gb-ssd' },
+  { model: 'MacBook Pro M2 Pro 14-inch (2023)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-pro-14-inch-m2-pro-chip-16-gb-ram-512-gb-ssd' },
   { model: 'MacBook Pro M3 14-inch (2024)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-pro-14-inch-m3-chip-8-gb-ram-512-gb-ssd' },
+  { model: 'MacBook Pro M3 Pro 14-inch (2024)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-pro-14-inch-m3-pro-chip-18-gb-ram-512-gb-ssd' },
   { model: 'MacBook Pro M3 Pro 16-inch (2024)', type: 'MacBook', url: 'https://www.cashify.in/sell-old-laptop/apple-macbook-pro-16-inch-m3-pro-chip-18-gb-ram-512-gb-ssd' },
-  { model: 'iPad Pro 11-inch M4 (2024)', type: 'iPad', url: 'https://www.cashify.in/sell-old-tablet/apple-ipad-pro-11-inch-m4-chip-256-gb-wifi-only' },
-  { model: 'iPad Air 5th Gen M1 (2022)', type: 'iPad', url: 'https://www.cashify.in/sell-old-tablet/apple-ipad-air-5th-generation-64-gb-wifi-only' },
+  { model: 'iPad 10.2-inch (2021) 9th Gen', type: 'iPad', url: 'https://www.cashify.in/sell-old-tablet/apple-ipad-9th-generation-64-gb-wifi-only' },
   { model: 'iPad 10.9-inch (2022) 10th Gen', type: 'iPad', url: 'https://www.cashify.in/sell-old-tablet/apple-ipad-10th-generation-64-gb-wifi-only' },
+  { model: 'iPad Air 5th Gen M1 (2022)', type: 'iPad', url: 'https://www.cashify.in/sell-old-tablet/apple-ipad-air-5th-generation-64-gb-wifi-only' },
+  { model: 'iPad Pro 11-inch M2 (2022)', type: 'iPad', url: 'https://www.cashify.in/sell-old-tablet/apple-ipad-pro-11-inch-3rd-gen-128-gb-wifi-only' },
+  { model: 'iPad Pro 11-inch M4 (2024)', type: 'iPad', url: 'https://www.cashify.in/sell-old-tablet/apple-ipad-pro-11-inch-m4-chip-256-gb-wifi-only' },
   { model: 'iPad Mini 6th Gen (2021)', type: 'iPad', url: 'https://www.cashify.in/sell-old-tablet/apple-ipad-mini-6th-generation-64-gb-wifi-only' },
 ]
 

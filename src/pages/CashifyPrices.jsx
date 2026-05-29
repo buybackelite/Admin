@@ -3,21 +3,28 @@ import { supabase } from '../lib/supabase'
 import { ExternalLink, Plus, Trash2, Save, RefreshCw, Laptop, Tablet, TrendingUp, ArrowRightLeft, Zap, CheckCircle2, AlertTriangle } from 'lucide-react'
 
 const MACBOOK_MODELS = [
-  'MacBook Air M1 (2020)', 'MacBook Air M2 (2022)', 'MacBook Air M3 (2024)',
-  'MacBook Pro M1 13"', 'MacBook Pro M1 Pro 14"', 'MacBook Pro M1 Pro 16"',
-  'MacBook Pro M1 Max 14"', 'MacBook Pro M1 Max 16"',
-  'MacBook Pro M2 13"', 'MacBook Pro M2 Pro 14"', 'MacBook Pro M2 Pro 16"',
-  'MacBook Pro M3 14"', 'MacBook Pro M3 Pro 14"', 'MacBook Pro M3 Pro 16"',
-  'MacBook Air 13" (Intel 2020)', 'MacBook Pro 13" (Intel 2020)',
+  'MacBook Air M1 (2020)', 'MacBook Air M2 (2022)', 'MacBook Air M2 15-inch (2023)',
+  'MacBook Air M3 (2024)', 'MacBook Air M4 (2025)', 'MacBook Air Mid 2017 (Intel)',
+  'MacBook Pro 2020 (Intel)', 'MacBook Pro M1 Pro 14-inch (2021)',
+  'MacBook Pro M1 Max 14-inch (2021)', 'MacBook Pro M1 Max 16-inch (2021)',
+  'MacBook Pro M2 13-inch (2022)', 'MacBook Pro M2 Pro 14-inch (2023)',
+  'MacBook Pro M2 Pro 16-inch (2023)', 'MacBook Pro M2 Max 14-inch (2023)',
+  'MacBook Pro M2 Max 16-inch (2023)', 'MacBook Pro M3 14-inch (2024)',
+  'MacBook Pro M3 Pro 14-inch (2024)', 'MacBook Pro M3 Pro 16-inch (2024)',
+  'MacBook Pro M3 Max 14-inch (2024)', 'MacBook Pro M3 Max 16-inch (2024)',
+  'MacBook Pro M4 Pro 14-inch (2025)', 'MacBook Pro M4 Pro 16-inch (2025)',
+  'MacBook Pro M4 Max 14-inch (2025)', 'MacBook Pro M4 Max 16-inch (2025)',
 ]
 
 const IPAD_MODELS = [
-  'iPad Air 5 (M1)', 'iPad Air 4', 'iPad Air 3',
-  'iPad Pro 12.9" M2 (2022)', 'iPad Pro 11" M2 (2022)',
-  'iPad Pro 12.9" M1 (2021)', 'iPad Pro 11" M1 (2021)',
-  'iPad Pro 12.9" (2020)', 'iPad Pro 11" (2020)',
-  'iPad 10th Gen', 'iPad 9th Gen', 'iPad 8th Gen',
-  'iPad mini 6', 'iPad mini 5',
+  'iPad 9.7-inch (2018) 6th Gen', 'iPad 10.2-inch (2019) 7th Gen',
+  'iPad 10.2-inch (2020) 8th Gen', 'iPad 10.2-inch (2021) 9th Gen',
+  'iPad 10.9-inch (2022) 10th Gen', 'iPad 11-inch (2025)',
+  'iPad Air 4th Gen (2020)', 'iPad Air 5th Gen M1 (2022)',
+  'iPad Pro 11-inch M1 (2021)', 'iPad Pro 12.9-inch M1 (2021)',
+  'iPad Pro 11-inch M2 (2022)', 'iPad Pro 12.9-inch M2 (2022)',
+  'iPad Pro 11-inch M4 (2024)', 'iPad Pro 13-inch M4 (2024)',
+  'iPad Pro M4 (2024)', 'iPad Mini 5th Gen (2019)', 'iPad Mini 6th Gen (2021)',
 ]
 
 function getCashifyUrl(modelName, deviceType) {
