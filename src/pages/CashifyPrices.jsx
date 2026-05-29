@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { ExternalLink, Plus, Trash2, Save, RefreshCw, Laptop, Tablet, TrendingUp } from 'lucide-react'
+import { ExternalLink, Plus, Trash2, Save, RefreshCw, Laptop, Tablet, TrendingUp, ArrowRightLeft, Zap, CheckCircle2, AlertTriangle } from 'lucide-react'
 
 const MACBOOK_MODELS = [
   'MacBook Air M1 (2020)', 'MacBook Air M2 (2022)', 'MacBook Air M3 (2024)',
@@ -76,6 +76,76 @@ export default function CashifyPrices() {
     setPrices(prev => prev.map(p => p.id === row.id ? { ...p, ...updateData } : p))
   }
 
+  // ===== SYNC CASHIFY PRICES → PRICE ENGINE =====
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState(null)
+  const [fetching, setFetching] = useState(false)
+
+  // Auto-fetch latest prices from Cashify via Edge Function
+  const fetchFromCashify = async () => {
+    if (!confirm('Fetch latest prices directly from Cashify website?\n\nThis calls an Edge Function that scrapes Cashify and updates prices automatically.')) return
+    setFetching(true)
+    setSyncResult(null)
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-cashify-prices')
+      if (error) throw error
+      showMessage('s', data.message || 'Prices updated from Cashify!')
+      setSyncResult({ success: true, updated: data.engineSynced || 0, inserted: 0, skipped: 0, source: 'cashify' })
+      fetchPrices() // Reload table
+    } catch (err) {
+      showMessage('e', 'Cashify fetch failed: ' + (err.message || 'Edge function error'))
+      setSyncResult({ success: false, error: err.message || 'Edge function not deployed yet' })
+    }
+    setFetching(false)
+  }
+
+  const syncToPriceEngine = async () => {
+    if (!confirm('Sync Cashify max_price as base_price to Price Engine?\n\nThis will UPDATE existing entries and INSERT new ones.')) return
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      // Get current price_engine entries
+      const { data: engineData } = await supabase.from('price_engine').select('id, model_name, base_price, device_type')
+      const engineMap = {}
+      ;(engineData || []).forEach(e => { engineMap[e.model_name.toLowerCase().trim()] = e })
+
+      let updated = 0, inserted = 0, skipped = 0
+
+      for (const cashify of prices) {
+        const key = cashify.model_name.toLowerCase().trim()
+        const newBase = cashify.max_price // Use max_price as base (excellent condition)
+
+        if (engineMap[key]) {
+          // Update existing
+          if (engineMap[key].base_price !== newBase) {
+            await supabase.from('price_engine').update({ base_price: newBase, updated_at: new Date().toISOString() }).eq('id', engineMap[key].id)
+            updated++
+          } else {
+            skipped++
+          }
+        } else {
+          // Insert new entry into price_engine
+          const { error } = await supabase.from('price_engine').insert({
+            model_name: cashify.model_name,
+            device_type: cashify.device_type,
+            base_price: newBase,
+            scrap_value: Math.round(newBase * 0.15), // 15% of base as scrap
+            is_active: true,
+          })
+          if (!error) inserted++
+          else skipped++
+        }
+      }
+
+      setSyncResult({ success: true, updated, inserted, skipped })
+      showMessage('s', `Synced! ${updated} updated, ${inserted} new, ${skipped} unchanged`)
+    } catch (err) {
+      setSyncResult({ success: false, error: err.message })
+      showMessage('e', 'Sync failed: ' + err.message)
+    }
+    setSyncing(false)
+  }
+
   const filtered = prices.filter(p => filter === 'all' || p.device_type === filter)
 
   return (
@@ -103,6 +173,14 @@ export default function CashifyPrices() {
           <button onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700">
             <Plus className="w-4 h-4" /> Add Price
+          </button>
+          <button onClick={syncToPriceEngine} disabled={syncing || prices.length === 0}
+            className="flex items-center gap-1.5 px-4 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 disabled:opacity-50">
+            <ArrowRightLeft className="w-4 h-4" /> {syncing ? 'Syncing...' : 'Sync → Price Engine'}
+          </button>
+          <button onClick={fetchFromCashify} disabled={fetching}
+            className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50">
+            <Zap className="w-4 h-4" /> {fetching ? 'Fetching...' : 'Auto-Fetch Cashify'}
           </button>
         </div>
       </div>
@@ -255,11 +333,29 @@ export default function CashifyPrices() {
         </div>
       )}
 
+      {/* Sync Result */}
+      {syncResult && (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium ${syncResult.success ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+          {syncResult.success ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <AlertTriangle className="w-5 h-5 text-red-600" />}
+          {syncResult.success
+            ? <span>Sync complete: <strong>{syncResult.updated}</strong> updated, <strong>{syncResult.inserted}</strong> new entries, <strong>{syncResult.skipped}</strong> unchanged</span>
+            : <span>Sync failed: {syncResult.error}</span>
+          }
+        </div>
+      )}
+
       {/* Info box */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
         <strong>How to use:</strong> Visit Cashify for the model, note the price range for Good/Like New condition, and enter it here.
         These prices are shown as market reference in the Requests detail panel when setting offers.
         Update prices periodically as Cashify prices change with market conditions.
+      </div>
+
+      {/* Sync explanation */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+        <strong><ArrowRightLeft className="w-4 h-4 inline mr-1" />Sync → Price Engine:</strong> Clicking this button will push the <strong>max_price</strong> from
+        Cashify as the <strong>base_price</strong> in your Price Engine. New models will be auto-created. Existing models will be updated only if price changed.
+        <br /><span className="text-blue-600 mt-1 block">💡 Pro/Max chips have higher prices automatically based on chip tier.</span>
       </div>
     </div>
   )
