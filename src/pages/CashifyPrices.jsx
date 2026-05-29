@@ -81,20 +81,21 @@ export default function CashifyPrices() {
   const [syncResult, setSyncResult] = useState(null)
   const [fetching, setFetching] = useState(false)
 
-  // Auto-fetch latest prices from Cashify via Edge Function
+  // Auto-fetch latest prices from Cashify via Vercel API route
   const fetchFromCashify = async () => {
-    if (!confirm('Fetch latest prices directly from Cashify website?\n\nThis calls an Edge Function that scrapes Cashify and updates prices automatically.')) return
+    if (!confirm('Fetch latest prices directly from Cashify website?\n\nThis calls a serverless function that scrapes Cashify and updates prices automatically.')) return
     setFetching(true)
     setSyncResult(null)
     try {
-      const { data, error } = await supabase.functions.invoke('sync-cashify-prices')
-      if (error) throw error
+      const response = await fetch('/api/sync-cashify', { method: 'POST' })
+      const data = await response.json()
+      if (!response.ok || !data.success) throw new Error(data.error || 'Fetch failed')
       showMessage('s', data.message || 'Prices updated from Cashify!')
-      setSyncResult({ success: true, updated: data.engineSynced || 0, inserted: 0, skipped: 0, source: 'cashify' })
+      setSyncResult({ success: true, updated: data.results?.filter(r => r.status === 'updated').length || 0, inserted: 0, skipped: data.results?.filter(r => r.status === 'failed').length || 0, source: 'cashify' })
       fetchPrices() // Reload table
     } catch (err) {
-      showMessage('e', 'Cashify fetch failed: ' + (err.message || 'Edge function error'))
-      setSyncResult({ success: false, error: err.message || 'Edge function not deployed yet' })
+      showMessage('e', 'Cashify fetch failed: ' + (err.message || 'Server error'))
+      setSyncResult({ success: false, error: err.message || 'API route error' })
     }
     setFetching(false)
   }
